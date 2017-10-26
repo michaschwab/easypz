@@ -96,7 +96,7 @@ const easyPZLoader = new EasyPZLoader();
 window.addEventListener('load', function() { easyPZLoader.checkElements(); });
 window.setInterval(function() { easyPZLoader.checkElements(); }, 2000);
 
-class EventEmitter<T>
+class EzEventEmitter<T>
 {
     subscribers : ((value: T) => void)[] = [];
     public emit(value?: T)
@@ -111,31 +111,29 @@ class EventEmitter<T>
         this.subscribers.push(subscriber);
     }
 }
-/*
-class Promise<T>
+
+class EzPromise<T>
 {
-    callback;
+    private onDone: (T) => void;
     
-    constructor(callback: (resolve, reject) => void)
+    public then(callback: (T) => void)
     {
-        callback(this.resolve, this.reject);
+        this.onDone = callback;
     }
     
     private resolve(data: T)
     {
-        this.callback(data);
+        if(this.onDone)
+        {
+            this.onDone(data);
+        }
     }
     
-    private reject(error)
+    constructor(mainPart: (resolve: (T) => void, reject) => void)
     {
-        this.callback(null, error);
+        mainPart((data: T) => { this.resolve(data);} , (data: T) => { this.resolve(data);});
     }
-    
-    then(callback: (data, error) => void)
-    {
-        this.callback = callback;
-    }
-}*/
+}
 
 class EasyPZ
 {
@@ -227,9 +225,9 @@ class EasyPZ
     
     enabledModes: string[];
     //@Input() onPanned: (x: number, y: number) => void;
-    public onPanned = new EventEmitter<{x: number, y: number}>();
-    public onZoomed = new EventEmitter<{x: number, y: number, scaleChange?: number, absoluteScaleChange?: number, targetX?: number, targetY?: number}>();
-    public resetAbsoluteScale = new EventEmitter<void>();
+    public onPanned = new EzEventEmitter<{x: number, y: number}>();
+    public onZoomed = new EzEventEmitter<{x: number, y: number, scaleChange?: number, absoluteScaleChange?: number, targetX?: number, targetY?: number}>();
+    public resetAbsoluteScale = new EzEventEmitter<void>();
     
     constructor(private el: HTMLElement, enabledModes: string[], onPanned: () => void, onZoomed: () => void, onResetAbsoluteScale: () => void)
     {
@@ -1071,9 +1069,9 @@ class EasyPZ
         return Math.sqrt(Math.pow(pos2.x - pos1.x, 2) + Math.pow(pos2.y - pos1.y, 2));
     }
     
-    callbackAfterTimeoutOrMovement(timeout: number, movement: number) : Promise<number>
+    callbackAfterTimeoutOrMovement(timeout: number, movement: number) : EzPromise<number>
     {
-        return new Promise<number>((resolve, reject) =>
+        return new EzPromise<number>((resolve, reject) =>
         {
             let resolved = false;
             
