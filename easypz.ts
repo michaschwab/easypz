@@ -138,47 +138,47 @@ class EzPromise<T>
 class EasyPZ
 {
     public static MODES = {'HOLD_ZOOM_IN': 0, 'HOLD_ZOOM_OUT': 1, 'CLICK_HOLD_ZOOM_IN': 2, 'CLICK_HOLD_ZOOM_OUT': 3, 'SIMPLE_PAN': 4, 'DBLCLICK_ZOOM_IN': 5, 'DBLCLICK_ZOOM_OUT': 6, 'DBLRIGHTCLICK_ZOOM_IN': 7, 'DBLRIGHTCLICK_ZOOM_OUT': 8, 'WHEEL_ZOOM': 9, 'WHEEL_PAN_X': 10, 'WHEEL_PAN_Y': 11, 'BRUSH_ZOOM_X': 12, 'BRUSH_ZOOM_Y': 13, 'BRUSH_ZOOM_2D': 14, 'DYNAMIC_ZOOM_X_STATIC': 15, 'DYNAMIC_ZOOM_X_ORIGINAL_PAN': 16, 'DYNAMIC_ZOOM_X_NORMAL_PAN': 17, 'DYNAMIC_ZOOM_X_ADJUSTABLE': 18, 'DYNAMIC_ZOOM_Y_STATIC': 19, 'DYNAMIC_ZOOM_Y_ORIGINAL_PAN': 20, 'DYNAMIC_ZOOM_Y_NORMAL_PAN': 21, 'DYNAMIC_ZOOM_Y_ADJUSTABLE': 22, 'PINCH_ZOOM': 23, 'PINCH_ZOOM_QUADRATIC': 24, 'PINCH_ZOOM_POWER_FOUR': 25, 'FLICK_PAN': 26, 'RUB_ZOOM_IN_X': 27, 'RUB_ZOOM_IN_Y': 28, 'RUB_ZOOM_OUT_X': 29, 'RUB_ZOOM_OUT_Y': 30, 'PINCH_PAN': 31, 'WHEEL_ZOOM_MOMENTUM': 32, 'PINCH_ZOOM_MOMENTUM': 33 };
-    public static MOUSE_EVENT_TYPES = {'MOUSE_DOWN': 0, 'MOUSE_MOVE': 1, 'MOUSE_UP': 2};
+    private static MOUSE_EVENT_TYPES = {'MOUSE_DOWN': 0, 'MOUSE_MOVE': 1, 'MOUSE_UP': 2};
     
-    lastMouseDownTime = 0;
-    mouseDownTime = 0;
-    mouseMoveTime = 0;
-    mouseUpTime = 0;
-    lastMousePos = {x: 0, y: 0};
-    numberOfPointers = 0;
-    mousePos = {x: 0, y: 0};
-    afterMouseMovedCallbacks : (() => void)[] = [];
-    height = 0;
-    width = 0;
+    private lastMouseDownTime = 0;
+    private mouseDownTime = 0;
+    private mouseMoveTime = 0;
+    private mouseUpTime = 0;
+    private lastMousePos = {x: 0, y: 0};
+    private numberOfPointers = 0;
+    private mousePos = {x: 0, y: 0};
+    private afterMouseMovedCallbacks : (() => void)[] = [];
+    private height = 0;
+    private width = 0;
     
-    hasUsedTouch = false;
-    simplePanning = false;
-    simplePanningPosition = {x: 0, y: 0};
-    flickPanning = false;
-    flickContinueTime = 0;
-    flickPositions : {time: number, x: number, y: number}[] = [];
-    flickMomentum = null;
+    private hasUsedTouch = false;
+    private simplePanning = false;
+    private simplePanningPosition = {x: 0, y: 0};
+    private flickPanning = false;
+    private flickContinueTime = 0;
+    private flickPositions : {time: number, x: number, y: number}[] = [];
+    private flickMomentum = null;
     
-    holdZooming = false;
-    holdZoomingOut = false;
-    holdZoomingPosition : {x: number, y: number};
+    private holdZooming = false;
+    private holdZoomingOut = false;
+    private holdZoomingPosition : {x: number, y: number};
     
-    dynamicZooming = false;
-    dynamicZoomDirection = 'y';
-    dynamicZoomPositionStart : {x: number, y: number};
-    dynamicZoomPositionRelative : {x: number, y: number};
-    dynamicZoomPosition = {x: 0, y: 0};
+    private dynamicZooming = false;
+    private dynamicZoomDirection = 'y';
+    private dynamicZoomPositionStart : {x: number, y: number};
+    private dynamicZoomPositionRelative : {x: number, y: number};
+    private dynamicZoomPosition = {x: 0, y: 0};
     
-    brushZooming = false;
-    brushZoomDirection = 'x';
-    brushStart : {x: number, y: number};
+    private brushZooming = false;
+    private brushZoomDirection = 'x';
+    private brushStart : {x: number, y: number};
     
-    pinchZoomPos : {x: number, y: number};
-    pinchZoomCenterPos : {x: number, y: number};
-    pinchZoomPosStart1  : {x: number, y: number};
-    pinchZoomPosStart2  : {x: number, y: number};
-    pinchZoomMomentum = null;
-    pinchZoomReferences = [];
+    private pinchZoomPos : {x: number, y: number};
+    private pinchZoomCenterPos : {x: number, y: number};
+    private pinchZoomPosStart1  : {x: number, y: number};
+    private pinchZoomPosStart2  : {x: number, y: number};
+    private pinchZoomMomentum = null;
+    private pinchZoomReferences = [];
     
     static SIMPLE_PANNING_MIN_DISTANCE = 3;
     static SIMPLE_PANNING_DELAY = 300;
@@ -223,7 +223,7 @@ class EasyPZ
     
     static DIMENSIONS = ['x', 'y'];
     
-    enabledModes: string[];
+    private enabledModes: string[];
     //@Input() onPanned: (x: number, y: number) => void;
     public onPanned = new EzEventEmitter<{x: number, y: number}>();
     public onZoomed = new EzEventEmitter<{x: number, y: number, scaleChange?: number, absoluteScaleChange?: number, targetX?: number, targetY?: number}>();
@@ -241,20 +241,20 @@ class EasyPZ
         this.setupHostListeners();
     }
     
-    ngAfterViewInit()
+    private ngAfterViewInit()
     {
         let rect = this.el.getBoundingClientRect();
         this.width = rect.width;
         this.height = rect.height;
     }
     
-    modeOn(mode: number): boolean
+    private modeOn(mode: number): boolean
     {
         let modeName = Object.keys(EasyPZ.MODES)[mode];
         return this.enabledModes.indexOf(modeName) !== -1;
     }
     
-    maybeCall(neededMode: number, fct: () => void)
+    private maybeCall(neededMode: number, fct: () => void)
     {
         if (this.modeOn(neededMode))
         {
@@ -262,7 +262,7 @@ class EasyPZ
         }
     }
     
-    updateMousePosition(event: MouseEvent|TouchEvent) : void
+    private updateMousePosition(event: MouseEvent|TouchEvent) : void
     {
         let pos = this.getMousePosition(event);
         if(pos)
@@ -271,7 +271,7 @@ class EasyPZ
         }
     }
     
-    getMousePosition(event: MouseEvent|TouchEvent) : {x: number, y: number}
+    private getMousePosition(event: MouseEvent|TouchEvent) : {x: number, y: number}
     {
         let pos = {x: 0, y: 0};
         
@@ -293,7 +293,7 @@ class EasyPZ
         return this.getRelativePosition(pos.x, pos.y);
     }
     
-    getRelativePosition(x: number, y: number) : {x: number, y: number}
+    private getRelativePosition(x: number, y: number) : {x: number, y: number}
     {
         let boundingRect = this.el.getBoundingClientRect();
         this.width = boundingRect.width;
@@ -301,7 +301,7 @@ class EasyPZ
         return { x: x - boundingRect.left, y: y - boundingRect.top };
     }
     
-    onMouseTouchDown(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchDown(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
     {
         this.lastMouseDownTime = this.mouseDownTime;
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
@@ -314,7 +314,7 @@ class EasyPZ
         this.onMouseTouchEvent(eventType, event);
     }
     
-    setupHostListeners()
+    private setupHostListeners()
     {
         this.el.addEventListener('mousedown', (event) => this.onMouseDown(event));
         this.el.addEventListener('touchstart', (event) => this.onTouchStart(event));
@@ -327,8 +327,7 @@ class EasyPZ
         this.el.addEventListener('wheel', (event) => this.onWheel(event));
     }
     
-    
-    onMouseDown(event: MouseEvent)
+    private onMouseDown(event: MouseEvent)
     {
         if(!this.hasUsedTouch)
         {
@@ -336,7 +335,7 @@ class EasyPZ
         }
     }
     
-    onTouchStart(event: TouchEvent)
+    private onTouchStart(event: TouchEvent)
     {
         this.hasUsedTouch = true;
         
@@ -353,7 +352,7 @@ class EasyPZ
         }
     }
     
-    onMouseTouchMove(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchMove(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
     {
         this.mouseMoveTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
@@ -369,12 +368,12 @@ class EasyPZ
         }
     }
     
-    onMouseMove(event: MouseEvent)
+    private onMouseMove(event: MouseEvent)
     {
         this.onMouseTouchMove(event);
     }
     
-    onTouchMove(event: TouchEvent)
+    private onTouchMove(event: TouchEvent)
     {
         if(event.touches.length == 1)
         {
@@ -389,7 +388,7 @@ class EasyPZ
         }
     }
     
-    onMultiTouchEvent(eventType: number, event: TouchEvent)
+    private onMultiTouchEvent(eventType: number, event: TouchEvent)
     {
         // this is just to make sure it is disabled
         this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_X, () => this.brushZoom(eventType, event, 'x'));
@@ -403,7 +402,7 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.PINCH_PAN, () => this.pinchZoom(eventType, event, 'fixed'));
     }
     
-    onMouseTouchUp(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchUp(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
     {
         this.mouseUpTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
@@ -415,7 +414,7 @@ class EasyPZ
         this.onMouseTouchEvent(eventType, event);
     }
     
-    onMouseTouchEvent(eventType: number, event: MouseEvent|TouchEvent)
+    private onMouseTouchEvent(eventType: number, event: MouseEvent|TouchEvent)
     {
         if(EasyPZ.isRightClick(event))
         {
@@ -447,7 +446,7 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.RUB_ZOOM_OUT_Y, () => this.rubZoom(eventType, event, 'y', 'out'));
     }
     
-    onMouseUp(event: MouseEvent)
+    private onMouseUp(event: MouseEvent)
     {
         // This has to be checked because mobile devices call both touchend as well as mouseup on release.
         
@@ -456,7 +455,7 @@ class EasyPZ
             this.onMouseTouchUp(event);
         }
     }
-    onMouseOut(event: MouseEvent)
+    private onMouseOut(event: MouseEvent)
     {
         // The problem with this is that it detects mouseout events of elements within this element,
         // not only of mouseout events of the main element itself. This is why a pointer position check is done
@@ -470,7 +469,7 @@ class EasyPZ
         }
     }
     
-    onTouchEnd(event: TouchEvent)
+    private onTouchEnd(event: TouchEvent)
     {
         // Touch End always has zero touch positions, so the pointer position can not be used here.
         
@@ -479,7 +478,7 @@ class EasyPZ
         this.onMultiTouchEvent(eventType, event);
     }
     
-    onContextMenu(event: MouseEvent)
+    private onContextMenu(event: MouseEvent)
     {
         if(this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_IN) || this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT))
         {
@@ -488,7 +487,7 @@ class EasyPZ
         }
     }
     
-    onWheel(event: WheelEvent)
+    private onWheel(event: WheelEvent)
     {
         this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM, () => this.wheelZoom(event));
         this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM, () => this.wheelZoomMomentum(event));
@@ -496,7 +495,7 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.WHEEL_PAN_Y, () => this.wheelPan(event, 'y'));
     }
     
-    onRightClick(eventType: number, event: MouseEvent|TouchEvent)
+    private onRightClick(eventType: number, event: MouseEvent|TouchEvent)
     {
         this.maybeCall(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_IN, () => this.dblRightClickZoom(eventType, event, 'in'));
         this.maybeCall(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT, () => this.dblRightClickZoom(eventType, event, 'out'));
@@ -504,7 +503,7 @@ class EasyPZ
     
     /* Simple Panning */
     
-    simplePan(eventType: number, event: MouseEvent|TouchEvent)
+    private simplePan(eventType: number, event: MouseEvent|TouchEvent)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -536,7 +535,7 @@ class EasyPZ
     
     /* Flick Panning */
     
-    flickPan(eventType: number, event: MouseEvent|TouchEvent)
+    private flickPan(eventType: number, event: MouseEvent|TouchEvent)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -590,7 +589,7 @@ class EasyPZ
         }
     }
     
-    momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
+    private momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
     {
         let startTime = Date.now();
         let lastMoveTime = Date.now();
@@ -629,7 +628,7 @@ class EasyPZ
     
     /* Hold Zooming */
     
-    holdZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in', clickFirst = false)
+    private holdZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in', clickFirst = false)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -688,7 +687,7 @@ class EasyPZ
     
     /* Double Click Zoom */
     
-    dblClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
+    private dblClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -713,7 +712,7 @@ class EasyPZ
     
     /* Dynamic / RubPointing Zoom */
     
-    dynamicZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string, mode: string)
+    private dynamicZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string, mode: string)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -791,7 +790,7 @@ class EasyPZ
     
     /* Brushing Zoom */
     
-    brushZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string)
+    private brushZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN && this.numberOfPointers === 1)
         {
@@ -849,7 +848,7 @@ class EasyPZ
     
     /* Wheel Zoom */
     
-    wheelZoom(event: WheelEvent)
+    private wheelZoom(event: WheelEvent)
     {
         const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
         const change = delta / Math.abs(delta);
@@ -861,7 +860,7 @@ class EasyPZ
     
     /* Wheel Zoom Momentum */
     
-    wheelZoomMomentum(event: WheelEvent)
+    private wheelZoomMomentum(event: WheelEvent)
     {
         const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
         let change = delta / Math.abs(delta);
@@ -885,7 +884,7 @@ class EasyPZ
     
     /* Wheel Pan */
     
-    wheelPan(event: WheelEvent, direction: string)
+    private wheelPan(event: WheelEvent, direction: string)
     {
         const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
         let change = delta / Math.abs(delta);
@@ -899,7 +898,7 @@ class EasyPZ
     
     /* Double Right Click Zoom Out */
     
-    dblRightClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
+    private dblRightClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -924,7 +923,7 @@ class EasyPZ
     
     /* Pinch Zoom */
     
-    pinchZoom(eventType: number, event: TouchEvent, scaling?: string, momentum?: boolean)
+    private pinchZoom(eventType: number, event: TouchEvent, scaling?: string, momentum?: boolean)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
@@ -989,14 +988,14 @@ class EasyPZ
         }
     }
     
-    rubZooming = false;
-    rubZoomHasChangedDirection = false;
-    rubZoomHasChangedDirectionSign = 0;
-    rubZoomHasChangedDirectionDirection = 'x';
-    rubZoomPosition = null;
-    rubZoomReference = null;
+    private rubZooming = false;
+    private rubZoomHasChangedDirection = false;
+    private rubZoomHasChangedDirectionSign = 0;
+    private rubZoomHasChangedDirectionDirection = 'x';
+    private rubZoomPosition = null;
+    private rubZoomReference = null;
     
-    rubZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string = 'x', inOut: string = 'in')
+    private rubZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string = 'x', inOut: string = 'in')
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
         {
