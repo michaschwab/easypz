@@ -135,6 +135,22 @@ class EzPromise<T>
     }
 }
 
+class EasyPzZoomData
+{
+    x: number;
+    y: number;
+    scaleChange?: number;
+    absoluteScaleChange?: number;
+    targetX?: number;
+    targetY?: number;
+}
+
+class EasyPzPanData
+{
+    x: number;
+    y: number;
+}
+
 class EasyPZ
 {
     public static MODES = {'HOLD_ZOOM_IN': 0, 'HOLD_ZOOM_OUT': 1, 'CLICK_HOLD_ZOOM_IN': 2, 'CLICK_HOLD_ZOOM_OUT': 3, 'SIMPLE_PAN': 4, 'DBLCLICK_ZOOM_IN': 5, 'DBLCLICK_ZOOM_OUT': 6, 'DBLRIGHTCLICK_ZOOM_IN': 7, 'DBLRIGHTCLICK_ZOOM_OUT': 8, 'WHEEL_ZOOM': 9, 'WHEEL_PAN_X': 10, 'WHEEL_PAN_Y': 11, 'BRUSH_ZOOM_X': 12, 'BRUSH_ZOOM_Y': 13, 'BRUSH_ZOOM_2D': 14, 'DYNAMIC_ZOOM_X_STATIC': 15, 'DYNAMIC_ZOOM_X_ORIGINAL_PAN': 16, 'DYNAMIC_ZOOM_X_NORMAL_PAN': 17, 'DYNAMIC_ZOOM_X_ADJUSTABLE': 18, 'DYNAMIC_ZOOM_Y_STATIC': 19, 'DYNAMIC_ZOOM_Y_ORIGINAL_PAN': 20, 'DYNAMIC_ZOOM_Y_NORMAL_PAN': 21, 'DYNAMIC_ZOOM_Y_ADJUSTABLE': 22, 'PINCH_ZOOM': 23, 'PINCH_ZOOM_QUADRATIC': 24, 'PINCH_ZOOM_POWER_FOUR': 25, 'FLICK_PAN': 26, 'RUB_ZOOM_IN_X': 27, 'RUB_ZOOM_IN_Y': 28, 'RUB_ZOOM_OUT_X': 29, 'RUB_ZOOM_OUT_Y': 30, 'PINCH_PAN': 31, 'WHEEL_ZOOM_MOMENTUM': 32, 'PINCH_ZOOM_MOMENTUM': 33 };
@@ -225,16 +241,40 @@ class EasyPZ
     
     private enabledModes: string[];
     //@Input() onPanned: (x: number, y: number) => void;
-    public onPanned = new EzEventEmitter<{x: number, y: number}>();
-    public onZoomed = new EzEventEmitter<{x: number, y: number, scaleChange?: number, absoluteScaleChange?: number, targetX?: number, targetY?: number}>();
+    public onPanned = new EzEventEmitter<EasyPzPanData>();
+    public onZoomed = new EzEventEmitter<EasyPzZoomData>();
     public resetAbsoluteScale = new EzEventEmitter<void>();
     
-    constructor(private el: HTMLElement, enabledModes: string[], onPanned: () => void, onZoomed: () => void, onResetAbsoluteScale: () => void)
+    private totalTransform = { scale: 1, translateX: 0, translateY: 0};
+    
+    constructor(private el: HTMLElement, enabledModes: string[],
+                onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void,
+                onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void,
+                onResetAbsoluteScale: () => void)
     {
         this.enabledModes = enabledModes;
         
-        this.onPanned.subscribe(onPanned);
-        this.onZoomed.subscribe(onZoomed);
+        this.onPanned.subscribe((panData: EasyPzPanData) =>
+        {
+            this.totalTransform.translateX += panData.x / this.totalTransform.scale;
+            this.totalTransform.translateY += panData.y / this.totalTransform.scale;
+            
+            onPanned(panData, this.totalTransform);
+        });
+        this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
+        {
+            let scaleChange = 1 / zoomData.scaleChange;
+            this.totalTransform.scale *= scaleChange;
+    
+            let posBefore = {x: zoomData.x , y: zoomData.y };
+            let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
+            let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
+            
+            this.totalTransform.translateX -= relative.x / this.totalTransform.scale;
+            this.totalTransform.translateY -= relative.y / this.totalTransform.scale;
+    
+            onZoomed(zoomData, this.totalTransform);
+        });
         this.resetAbsoluteScale.subscribe(onResetAbsoluteScale);
         
         this.ngAfterViewInit();
