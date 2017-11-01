@@ -670,6 +670,14 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM, () => this.wheelZoomMomentum(event));
         this.maybeCall(EasyPZ.MODES.WHEEL_PAN_X, () => this.wheelPan(event, 'x'));
         this.maybeCall(EasyPZ.MODES.WHEEL_PAN_Y, () => this.wheelPan(event, 'y'));
+        
+        if(this.modeOn(EasyPZ.MODES.WHEEL_ZOOM)
+            || this.modeOn(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM)
+            || this.modeOn(EasyPZ.MODES.WHEEL_PAN_X)
+            || this.modeOn(EasyPZ.MODES.WHEEL_PAN_Y))
+        {
+            event.preventDefault();
+        }
     }
     
     private onRightClick(eventType: number, event: MouseEvent|TouchEvent)
