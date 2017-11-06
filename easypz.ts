@@ -246,22 +246,28 @@ class EasyPZ
     
     static DIMENSIONS = ['x', 'y'];
     
-    private enabledModes: string[];
+    private enabledModes = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
     //@Input() onPanned: (x: number, y: number) => void;
     public onPanned = new EzEventEmitter<EasyPzPanData>();
     public onZoomed = new EzEventEmitter<EasyPzZoomData>();
     public resetAbsoluteScale = new EzEventEmitter<void>();
     
     private totalTransform = { scale: 1, translateX: 0, translateY: 0};
+    private el: HTMLElement;
     
-    constructor(private el: HTMLElement, enabledModes: string[],
-                onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void,
-                onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void,
-                onResetAbsoluteScale: () => void,
+    constructor(el: HTMLElement|{node: () => HTMLElement},
+                enabledModes: string[],
+                onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                onResetAbsoluteScale: () => void = () => {},
                 private applyTransformTo: string = '',
                 replaceVariables = false)
     {
-        this.enabledModes = enabledModes;
+        if(enabledModes)
+        {
+            this.enabledModes = enabledModes;
+        }
+        this.el = el instanceof HTMLElement ? el : el.node();
         
         this.trackTotalTransformation(onPanned, onZoomed);
         this.resetAbsoluteScale.subscribe(onResetAbsoluteScale);
