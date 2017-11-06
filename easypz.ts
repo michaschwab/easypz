@@ -12,11 +12,12 @@ class EasyPZLoader
     static DEFAULT_MODES = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
     private easyPzElements = [];
     
-    private static getSettingsFromString(settingsString) : { onPanned: () => void, onZoomed: () => void, onResetAbsoluteScale: () => void, modes: string[], applyTransformTo: string, replaceVariables: boolean }
+    private static getSettingsFromString(settingsString) : { onPanned: () => void, onZoomed: () => void, onTransformed: () => void, onResetAbsoluteScale: () => void, modes: string[], applyTransformTo: string, replaceVariables: boolean }
     {
         let settings = {
             onPanned: typeof window['onPanned'] === 'function' ? window['onPanned'] : () => {},
             onZoomed: typeof window['onZoomed'] === 'function' ? window['onZoomed'] : () => {},
+            onTransformed: typeof window['onTransformed'] === 'function' ? window['onTransformed'] : () => {},
             onResetAbsoluteScale: () => {},
             modes: EasyPZLoader.DEFAULT_MODES,
             applyTransformTo: '',
@@ -37,7 +38,7 @@ class EasyPZLoader
             console.log(e);
         }
         
-        const possibleOverrides = ['modes', 'onPanned', 'onZoomed', 'onResetAbsoluteScale', 'applyTransformTo'];
+        const possibleOverrides = ['modes', 'onPanned', 'onZoomed', 'onTransformed', 'onResetAbsoluteScale', 'applyTransformTo'];
         
         for(let possibleOverride of possibleOverrides)
         {
@@ -76,6 +77,7 @@ class EasyPZLoader
             let modes = [];
             let onPanned = function() {};
             let onZoomed = function() {};
+            let onTransformed = function() {};
             let onResetAbsoluteScale = function() {};
             let applyTransformTo = '';
             let replaceVariables = false;
@@ -86,6 +88,7 @@ class EasyPZLoader
                 
                 onPanned = settingsObj.onPanned;
                 onZoomed = settingsObj.onZoomed;
+                onTransformed = settingsObj.onTransformed;
                 onResetAbsoluteScale = settingsObj.onResetAbsoluteScale;
                 applyTransformTo = settingsObj.applyTransformTo;
                 replaceVariables = settingsObj.replaceVariables;
@@ -94,7 +97,7 @@ class EasyPZLoader
             {
                 console.error(e);
             }
-            new EasyPZ(el, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
         }
     }
 }
@@ -256,7 +259,8 @@ class EasyPZ
     private el: HTMLElement;
     
     constructor(el: Node|{node: () => HTMLElement},
-                enabledModes: string[],
+                onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                enabledModes: string[] = null,
                 onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onResetAbsoluteScale: () => void = () => {},
@@ -269,7 +273,7 @@ class EasyPZ
         }
         this.el = el instanceof Node ? <HTMLElement> el : el.node();
         
-        this.trackTotalTransformation(onPanned, onZoomed);
+        this.trackTotalTransformation(onTransform, onPanned, onZoomed);
         this.resetAbsoluteScale.subscribe(onResetAbsoluteScale);
         this.onPanned.subscribe(() => this.applyTransformation());
         this.onZoomed.subscribe(() => this.applyTransformation());
@@ -285,7 +289,7 @@ class EasyPZ
         this.setupHostListeners();
     }
     
-    private trackTotalTransformation(onPanned, onZoomed)
+    private trackTotalTransformation(onTransform, onPanned, onZoomed)
     {
         this.onPanned.subscribe((panData: EasyPzPanData) =>
         {
@@ -295,6 +299,7 @@ class EasyPZ
             this.totalTransform.translateY += panData.y;
             
             onPanned(panData, this.totalTransform);
+            onTransform(this.totalTransform);
         });
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
@@ -315,6 +320,7 @@ class EasyPZ
             this.totalTransform.translateY -= relative.y / this.totalTransform.scale;*/
             
             onZoomed(zoomData, this.totalTransform);
+            onTransform(this.totalTransform);
         });
     }
     
