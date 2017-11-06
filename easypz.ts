@@ -273,7 +273,8 @@ class EasyPZ
         }
         this.el = el instanceof Node ? <HTMLElement> el : el.node();
         
-        this.trackTotalTransformation(onTransform, onPanned, onZoomed);
+        let transformBeforeScale = applyTransformTo ? false : true;
+        this.trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale);
         this.resetAbsoluteScale.subscribe(onResetAbsoluteScale);
         this.onPanned.subscribe(() => this.applyTransformation());
         this.onZoomed.subscribe(() => this.applyTransformation());
@@ -289,14 +290,20 @@ class EasyPZ
         this.setupHostListeners();
     }
     
-    private trackTotalTransformation(onTransform, onPanned, onZoomed)
+    private trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale)
     {
         this.onPanned.subscribe((panData: EasyPzPanData) =>
         {
-            /*this.totalTransform.translateX += panData.x / this.totalTransform.scale;
-            this.totalTransform.translateY += panData.y / this.totalTransform.scale;*/
-            this.totalTransform.translateX += panData.x;
-            this.totalTransform.translateY += panData.y;
+            if(transformBeforeScale)
+            {
+                this.totalTransform.translateX += panData.x;
+                this.totalTransform.translateY += panData.y;
+            }
+            else
+            {
+                this.totalTransform.translateX += panData.x / this.totalTransform.scale;
+                this.totalTransform.translateY += panData.y / this.totalTransform.scale;
+            }
             
             onPanned(panData, this.totalTransform);
             onTransform(this.totalTransform);
@@ -304,20 +311,25 @@ class EasyPZ
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
             let scaleChange = 1 / zoomData.scaleChange;
-            let scalePrev = this.totalTransform.scale;
-            let scaleAfter = this.totalTransform.scale * scaleChange;
-    
-            this.totalTransform.scale = this.totalTransform.scale * scaleChange;
-    
-            this.totalTransform.translateX = (this.totalTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
-            this.totalTransform.translateY = (this.totalTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
-            /*
-            let posBefore = {x: zoomData.x , y: zoomData.y };
-            let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
-            let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
-
-            this.totalTransform.translateX -= relative.x / this.totalTransform.scale;
-            this.totalTransform.translateY -= relative.y / this.totalTransform.scale;*/
+            this.totalTransform.scale *= scaleChange;
+            
+            if(transformBeforeScale)
+            {
+                let scalePrev = this.totalTransform.scale;
+                let scaleAfter = this.totalTransform.scale * scaleChange;
+                
+                this.totalTransform.translateX = (this.totalTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
+                this.totalTransform.translateY = (this.totalTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
+            }
+            else
+            {
+                let posBefore = {x: zoomData.x , y: zoomData.y };
+                let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
+                let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
+                
+                this.totalTransform.translateX -= relative.x / this.totalTransform.scale;
+                this.totalTransform.translateY -= relative.y / this.totalTransform.scale;
+            }
             
             onZoomed(zoomData, this.totalTransform);
             onTransform(this.totalTransform);
@@ -351,8 +363,8 @@ class EasyPZ
                     console.log('what is wrong', transform);
                 }
                 
-                element.setAttribute('transform', 'translate(' + translateX + ',' + translateY + ')' + 'scale(' + this.totalTransform.scale + ')');
-                //element.setAttribute('transform', 'scale(' + this.totalTransform.scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
+                //element.setAttribute('transform', 'translate(' + translateX + ',' + translateY + ')' + 'scale(' + this.totalTransform.scale + ')');
+                element.setAttribute('transform', 'scale(' + this.totalTransform.scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
             }
             
             this.lastAppliedTransform.translateX = this.totalTransform.translateX;
