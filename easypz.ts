@@ -366,7 +366,7 @@ class EasyPZ
     {
         if(this.applyTransformTo)
         {
-            let els = document.querySelectorAll(this.applyTransformTo);
+            let els = this.el.querySelectorAll(this.applyTransformTo);
             
             for(let i = 0; i < els.length; i++)
             {
