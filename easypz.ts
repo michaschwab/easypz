@@ -256,6 +256,7 @@ class EasyPZ
     public resetAbsoluteScale = new EzEventEmitter<void>();
     
     private totalTransform = { scale: 1, translateX: 0, translateY: 0};
+    private totalTransformSnapshot = { scale: 1, translateX: 0, translateY: 0};
     private el: HTMLElement;
     
     constructor(el: Node|{node: () => HTMLElement},
@@ -275,7 +276,7 @@ class EasyPZ
         
         let transformBeforeScale = applyTransformTo ? false : true;
         this.trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale);
-        this.resetAbsoluteScale.subscribe(onResetAbsoluteScale);
+        this.resetAbsoluteScale.subscribe(() => this.saveCurrentTransformation(onResetAbsoluteScale));
         this.onPanned.subscribe(() => this.applyTransformation());
         this.onZoomed.subscribe(() => this.applyTransformation());
         
@@ -288,6 +289,17 @@ class EasyPZ
         
         this.ngAfterViewInit();
         this.setupHostListeners();
+    }
+    
+    private saveCurrentTransformation(onResetAbsoluteScale)
+    {
+        this.totalTransformSnapshot = {
+            scale: this.totalTransform.scale,
+            translateX: this.totalTransform.translateX,
+            translateY: this.totalTransform.translateY
+        };
+        
+        onResetAbsoluteScale();
     }
     
     private trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale)
@@ -310,11 +322,11 @@ class EasyPZ
         });
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
-            let scaleChange = 1 / zoomData.scaleChange;
-            this.totalTransform.scale *= scaleChange;
-            
             if(transformBeforeScale)
             {
+                let scaleChange = 1 / zoomData.scaleChange;
+                this.totalTransform.scale *= scaleChange;
+                
                 let scalePrev = this.totalTransform.scale;
                 let scaleAfter = this.totalTransform.scale * scaleChange;
                 
@@ -323,12 +335,24 @@ class EasyPZ
             }
             else
             {
+                // Zoom either relative to the current transformation, or to the saved snapshot.
+                let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
+                let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomData.scaleChange;
+                
+                this.totalTransform.scale = relativeTransform.scale * scaleChange;
+                
                 let posBefore = {x: zoomData.x , y: zoomData.y };
                 let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
                 let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
                 
-                this.totalTransform.translateX -= relative.x / this.totalTransform.scale;
-                this.totalTransform.translateY -= relative.y / this.totalTransform.scale;
+                this.totalTransform.translateX = relativeTransform.translateX - relative.x / this.totalTransform.scale;
+                this.totalTransform.translateY = relativeTransform.translateY - relative.y / this.totalTransform.scale;
+                
+                if(zoomData.targetX || zoomData.targetY)
+                {
+                    this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / this.totalTransform.scale;
+                    this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / this.totalTransform.scale;
+                }
             }
             
             onZoomed(zoomData, this.totalTransform);
