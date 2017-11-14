@@ -242,8 +242,6 @@ class EasyPZ
     static RUB_ZOOM_MIN_DISTANCE = 15;
     static RUB_ZOOM_MIN_DISTANCE_AFTER_DIRECTION_CHANGE = 10;
     
-    static PINCH_ZOOM_FRICTION = 0.00001;
-    
     static DIMENSIONS = ['x', 'y'];
     
     private enabledModes = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
@@ -275,7 +273,7 @@ class EasyPZ
             return unresolvedMode(this);
         });
         
-        let transformBeforeScale = applyTransformTo ? false : true;
+        let transformBeforeScale = !applyTransformTo;
         this.trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale);
         this.resetAbsoluteScale.subscribe(() => this.saveCurrentTransformation(onResetAbsoluteScale));
         this.onPanned.subscribe(() => this.applyTransformation());
@@ -528,7 +526,7 @@ class EasyPZ
         return this.getRelativePosition(pos.x, pos.y);
     }
     
-    private getRelativePosition(x: number, y: number) : {x: number, y: number}
+    public getRelativePosition(x: number, y: number) : {x: number, y: number}
     {
         let boundingRect = this.el.getBoundingClientRect();
         this.width = boundingRect.width;
@@ -657,11 +655,11 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_Y, () => this.brushZoom(eventType, event, 'y'));
         this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_2D, () => this.brushZoom(eventType, event, 'xy'));
         
-        this.maybeCall(EasyPZ.MODES.PINCH_ZOOM, () => this.pinchZoom(eventType, event));
+        /*this.maybeCall(EasyPZ.MODES.PINCH_ZOOM, () => this.pinchZoom(eventType, event));
         this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_QUADRATIC, () => this.pinchZoom(eventType, event, 'quadratic'));
         this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_POWER_FOUR, () => this.pinchZoom(eventType, event, 'power_four'));
         this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_MOMENTUM, () => this.pinchZoom(eventType, event, 'linear', true));
-        this.maybeCall(EasyPZ.MODES.PINCH_PAN, () => this.pinchZoom(eventType, event, 'fixed'));
+        this.maybeCall(EasyPZ.MODES.PINCH_PAN, () => this.pinchZoom(eventType, event, 'fixed'));*/
     }
     
     private onMouseTouchUp(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
@@ -1018,7 +1016,7 @@ class EasyPZ
     
     
     /* Pinch Zoom */
-    
+    /*
     private pinchZoom(eventType: number, event: TouchEvent, scaling?: string, momentum?: boolean)
     {
         if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
@@ -1082,7 +1080,7 @@ class EasyPZ
                 this.pinchZoomMomentum.start();
             }
         }
-    }
+    }*/
     
     private rubZooming = false;
     private rubZoomHasChangedDirection = false;
@@ -1467,6 +1465,91 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 });
                 
                 this.flickMomentum.start();
+            }
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['PINCH_ZOOM', 'PINCH_ZOOM_QUADRATIC', 'PINCH_ZOOM_POWER_FOUR', 'PINCH_ZOOM_MOMENTUM', 'PINCH_PAN'],
+        settings: {
+            friction: 0.00001
+        },
+        data: {
+            momentum: null,
+            posStart1: null,
+            posStart2: null,
+            references: [],
+            zoomPos: {x: 0, y: 0},
+            zoomCenterPos: {x: 0, y: 0}
+        },
+        
+        onClickTouch(eventData: EasyPzCallbackData)
+        {
+            if(mode.data.momentum)
+            {
+                mode.data.momentum.stop();
+            }
+            mode.data.references = [];
+            mode.data.posStart1 = easypz.getRelativePosition(eventData.event.touches[0].clientX, eventData.event.touches[0].clientY);
+            mode.data.posStart2 = easypz.getRelativePosition(eventData.event.touches[1].clientX, eventData.event.touches[1].clientY);
+            easypz.resetAbsoluteScale.emit();
+        },
+        
+        onMove(eventData: EasyPzCallbackData)
+        {
+            if(mode.data.posStart1 && mode.data.posStart2)
+            {
+                const pos1 = easypz.getRelativePosition(eventData.event.touches[0].clientX, eventData.event.touches[0].clientY);
+                const pos2 = easypz.getRelativePosition(eventData.event.touches[1].clientX, eventData.event.touches[1].clientY);
+                const distBefore = EasyPZ.getPositionDistance(mode.data.posStart1, mode.data.posStart2);
+                const distNow = EasyPZ.getPositionDistance(pos1, pos2);
+                const ratio = distBefore / distNow;
+                
+                let power = 1;
+                if(eventData.modeName === 'PINCH_ZOOM_QUADRATIC') power = 2;
+                if(eventData.modeName === 'PINCH_ZOOM_POWER_FOUR') power = 4;
+                if(eventData.modeName === 'PINCH_PAN') power = 0;
+                const scale = Math.pow(ratio, power);
+                
+                mode.data.references.push({time: Date.now(), scale});
+                mode.data.zoomPos = {x: (mode.data.posStart1.x + mode.data.posStart2.x) / 2, y: (mode.data.posStart1.y + mode.data.posStart2.y) / 2};
+                mode.data.zoomCenterPos = {x: (pos1.x + pos2.x) / 2, y: (pos1.y + pos2.y) / 2};
+                easypz.onZoomed.emit({x: mode.data.zoomPos.x, y: mode.data.zoomPos.y, absoluteScaleChange: scale, targetX: mode.data.zoomCenterPos.x, targetY: mode.data.zoomCenterPos.y});
+            }
+        },
+        
+        onClickTouchEnd(eventData: EasyPzCallbackData)
+        {
+            mode.data.posStart1 = null;
+            mode.data.posStart1 = null;
+            
+            if(eventData.modeName === 'PINCH_ZOOM_MOMENTUM' && mode.data.references.length > 5)
+            {
+                let refLast = mode.data.references[mode.data.references.length-1];
+                let ref = mode.data.references[mode.data.references.length-4];
+                let refTimeDiff = refLast.time - ref.time;
+                let refScaleDiff = refLast.scale - ref.scale;
+                
+                let lastScale = refLast.scale;
+                
+                let scaleChangeSpeed = refScaleDiff / refTimeDiff;
+                let absScaleChangeSpeed = Math.abs(scaleChangeSpeed);
+                let scaleSign = sign(scaleChangeSpeed);
+                
+                mode.data.momentum = EasyPZ.momentumInteraction(absScaleChangeSpeed, mode.settings.friction, (dist) =>
+                {
+                    let newScale = lastScale + scaleSign * dist;
+                    easypz.onZoomed.emit({x: this.pinchZoomPos.x, y: this.pinchZoomPos.y, absoluteScaleChange: newScale, targetX: this.pinchZoomCenterPos.x, targetY: this.pinchZoomCenterPos.y});
+                    lastScale = newScale;
+                });
+                
+                mode.data.momentum.start();
             }
         }
     };
