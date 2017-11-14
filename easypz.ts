@@ -226,16 +226,6 @@ class EasyPZ
     private pinchZoomMomentum = null;
     private pinchZoomReferences = [];
     
-    static DBLCLICK_ZOOM_DBLCLICKTIME = 300;
-    static DBLCLICK_MAX_HOLD_TIME = 200;
-    static DBLRIGHTCLICK_ZOOM_IN_SCALECHANGE  = 0.3;
-    static DBLRIGHTCLICK_ZOOM_OUT_SCALECHANGE  = 3;
-    
-    static WHEEL_ZOOM_IN_SCALECHANGE = 0.8;
-    static WHEEL_ZOOM_OUT_SCALECHANGE = 1.2;
-    
-    static WHEEL_ZOOM_MOMENTUM_SPEED_PERCENTAGE = 0.01;
-    static WHEEL_ZOOM_MOMENTUM_FRICTION = 0.000004;
     
     static WHEEL_PAN_SPEED = 50;
     
@@ -810,8 +800,8 @@ class EasyPZ
             });
         });
         
-        this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM, () => this.wheelZoom(event));
-        this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM, () => this.wheelZoomMomentum(event));
+        //this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM, () => this.wheelZoom(event));
+        //this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM, () => this.wheelZoomMomentum(event));
         this.maybeCall(EasyPZ.MODES.WHEEL_PAN_X, () => this.wheelPan(event, 'x'));
         this.maybeCall(EasyPZ.MODES.WHEEL_PAN_Y, () => this.wheelPan(event, 'y'));
         
@@ -1010,42 +1000,6 @@ class EasyPZ
                 }
             }
         }
-    }
-    
-    /* Wheel Zoom */
-    
-    private wheelZoom(event: WheelEvent)
-    {
-        const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
-        const change = delta / Math.abs(delta);
-        const zoomingIn = change > 0;
-        
-        let scale = zoomingIn ? EasyPZ.WHEEL_ZOOM_IN_SCALECHANGE : EasyPZ.WHEEL_ZOOM_OUT_SCALECHANGE;
-        this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: scale});
-    }
-    
-    /* Wheel Zoom Momentum */
-    
-    private wheelZoomMomentum(event: WheelEvent)
-    {
-        const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
-        let change = delta / Math.abs(delta);
-        let zoomingIn = change > 0;
-        
-        let scale = zoomingIn ? EasyPZ.WHEEL_ZOOM_IN_SCALECHANGE : EasyPZ.WHEEL_ZOOM_OUT_SCALECHANGE;
-        this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: scale});
-        
-        let relativeScale = 1 - scale;
-        let absScale = Math.abs(relativeScale) * EasyPZ.WHEEL_ZOOM_MOMENTUM_SPEED_PERCENTAGE;
-        let scaleSign = sign(relativeScale);
-        
-        this.flickMomentum = EasyPZ.momentumInteraction(absScale, EasyPZ.WHEEL_ZOOM_MOMENTUM_FRICTION, (dist) =>
-        {
-            let newScale = 1 - scaleSign * dist;
-            this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: newScale});
-        });
-        
-        this.flickMomentum.start();
     }
     
     /* Wheel Pan */
@@ -1472,6 +1426,47 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 
                 let scaleChange = zoomingOut ? mode.settings.zoomOutScaleChange : mode.settings.zoomInScaleChange;
                 easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scaleChange});
+            }
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['WHEEL_ZOOM', 'WHEEL_ZOOM_MOMENTUM'],
+        settings: {
+            zoomInScaleChange: 0.8,
+            zoomOutScaleChange: 1.2,
+            momentumSpeedPercentage: 0.01,
+            momentumFriction: 0.000004
+        },
+        
+        onWheel: (eventData: EasyPzCallbackData) =>
+        {
+            const delta = eventData.event.wheelDelta ? eventData.event.wheelDelta : -1 * eventData.event.deltaY;
+            const change = delta / Math.abs(delta);
+            const zoomingIn = change > 0;
+            
+            let scale = zoomingIn ? mode.settings.zoomInScaleChange : mode.settings.zoomOutScaleChange;
+            easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scale});
+            
+            if(eventData.modeName === 'WHEEL_ZOOM_MOMENTUM')
+            {
+                let relativeScale = 1 - scale;
+                let absScale = Math.abs(relativeScale) * mode.settings.momentumSpeedPercentage;
+                let scaleSign = sign(relativeScale);
+                
+                this.flickMomentum = EasyPZ.momentumInteraction(absScale, mode.settings.momentumFriction, (dist) =>
+                {
+                    let newScale = 1 - scaleSign * dist;
+                    easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: newScale});
+                });
+                
+                this.flickMomentum.start();
             }
         }
     };
