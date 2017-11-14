@@ -227,8 +227,6 @@ class EasyPZ
     private pinchZoomReferences = [];
     
     
-    static WHEEL_PAN_SPEED = 50;
-    
     static DYNAMIC_ZOOM_SPEED = 0.05;
     static DYNAMIC_ZOOM_MIN_DISTANCE_WITHIN_DELAY = 3;
     static DYNAMIC_ZOOM_DELAY = 300;
@@ -800,8 +798,8 @@ class EasyPZ
         
         //this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM, () => this.wheelZoom(event));
         //this.maybeCall(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM, () => this.wheelZoomMomentum(event));
-        this.maybeCall(EasyPZ.MODES.WHEEL_PAN_X, () => this.wheelPan(event, 'x'));
-        this.maybeCall(EasyPZ.MODES.WHEEL_PAN_Y, () => this.wheelPan(event, 'y'));
+        // this.maybeCall(EasyPZ.MODES.WHEEL_PAN_X, () => this.wheelPan(event, 'x'));
+        // this.maybeCall(EasyPZ.MODES.WHEEL_PAN_Y, () => this.wheelPan(event, 'y'));
         
         if(this.modeOn(EasyPZ.MODES.WHEEL_ZOOM)
             || this.modeOn(EasyPZ.MODES.WHEEL_ZOOM_MOMENTUM)
@@ -1002,7 +1000,7 @@ class EasyPZ
     
     /* Wheel Pan */
     
-    private wheelPan(event: WheelEvent, direction: string)
+    /*private wheelPan(event: WheelEvent, direction: string)
     {
         const delta = event.wheelDelta ? event.wheelDelta : -1 * event.deltaY;
         let change = delta / Math.abs(delta);
@@ -1012,7 +1010,7 @@ class EasyPZ
         let panned = {x: 0, y: 0};
         panned[direction] = EasyPZ.WHEEL_PAN_SPEED * sign;
         this.onPanned.emit(panned);
-    }
+    }*/
     
     
     /* Pinch Zoom */
@@ -1551,6 +1549,32 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 
                 mode.data.momentum.start();
             }
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['WHEEL_PAN_X', 'WHEEL_PAN_Y'],
+        settings: {
+            speed: 50
+        },
+        
+        onWheel: (eventData: EasyPzCallbackData) =>
+        {
+            const delta = eventData.event.wheelDelta ? eventData.event.wheelDelta : -1 * eventData.event.deltaY;
+            let change = delta / Math.abs(delta);
+            let zoomingIn = change > 0;
+            let sign = zoomingIn ? 1 : -1;
+            
+            let panned = {x: 0, y: 0};
+            const direction = eventData.modeName === 'WHEEL_PAN_X' ? 'x' : 'y';
+            panned[direction] = mode.settings.speed * sign;
+            this.onPanned.emit(panned);
         }
     };
     
