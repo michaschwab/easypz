@@ -15,14 +15,22 @@ class EasyPZLoader
     private static getSettingsFromString(settingsString) : { onPanned: () => void, onZoomed: () => void, onTransformed: () => void, onResetAbsoluteScale: () => void, modes: string[], applyTransformTo: string, replaceVariables: boolean }
     {
         let settings = {
-            onPanned: !!window['onPanned'] ? window['onPanned'] : () => {},
-            onZoomed: !!window['onZoomed'] ? window['onZoomed'] : () => {},
-            onTransformed: !!window['onTransformed'] ? window['onTransformed'] : () => {},
+            onPanned: () => {},
+            onZoomed: () => {},
+            onTransformed: () => {},
             onResetAbsoluteScale: () => {},
             modes: EasyPZLoader.DEFAULT_MODES,
             applyTransformTo: '',
             replaceVariables: false
         };
+        if(!!window['onPanned'])
+            settings.onPanned = window['onPanned'];
+        if(!!window['onZoomed'])
+            settings.onPanned = window['onZoomed'];
+        if(!!window['onTransformed'])
+            settings.onPanned = window['onTransformed'];
+        if(!!window['onResetAbsoluteScale'])
+            settings.onPanned = window['onResetAbsoluteScale'];
         
         let settingsObj = {};
         try
