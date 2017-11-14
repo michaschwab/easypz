@@ -226,20 +226,7 @@ class EasyPZ
     private pinchZoomMomentum = null;
     private pinchZoomReferences = [];
     
-    static SIMPLE_PANNING_MIN_DISTANCE = 3;
-    static SIMPLE_PANNING_DELAY = 300;
-    
-    static FLICK_PANNING_FRICTION = 0.002;
-    
-    static HOLD_ZOOM_MAX_DISTANCE = 3;
-    static HOLD_ZOOM_DELAY = 300;
-    static HOLD_ZOOMING_IN_SCALE_CHANGE_PER_MS = -0.0015;
-    static HOLD_ZOOMING_OUT_SCALE_CHANGE_PER_MS = 0.003;
-    static HOLD_ZOOMING_OUT_DBLCLICK_TIMEOUT = 300;
-    
     static DBLCLICK_ZOOM_DBLCLICKTIME = 300;
-    static DBLCLICK_ZOOM_IN_SCALECHANGE = 0.3;
-    static DBLCLICK_ZOOM_OUT_SCALECHANGE = 5;
     static DBLCLICK_MAX_HOLD_TIME = 200;
     static DBLRIGHTCLICK_ZOOM_IN_SCALECHANGE  = 0.3;
     static DBLRIGHTCLICK_ZOOM_OUT_SCALECHANGE  = 3;
@@ -746,8 +733,8 @@ class EasyPZ
         //this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_OUT, () => this.holdZoom(eventType, event, 'out'));
         //this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in', true));
         //this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_OUT, () => this.holdZoom(eventType, event, 'out', true));
-        this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_IN, () => this.dblClickZoom(eventType, event, 'in'));
-        this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_OUT, () => this.dblClickZoom(eventType, event, 'out'));
+        //this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_IN, () => this.dblClickZoom(eventType, event, 'in'));
+        //this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_OUT, () => this.dblClickZoom(eventType, event, 'out'));
         this.maybeCall(EasyPZ.MODES.DYNAMIC_ZOOM_X_STATIC, () => this.dynamicZoom(eventType, event, 'x', 'static'));
         this.maybeCall(EasyPZ.MODES.DYNAMIC_ZOOM_X_ORIGINAL_PAN, () => this.dynamicZoom(eventType, event, 'x', 'original_pan'));
         this.maybeCall(EasyPZ.MODES.DYNAMIC_ZOOM_X_NORMAL_PAN, () => this.dynamicZoom(eventType, event, 'x', 'normal_pan'));
@@ -888,32 +875,6 @@ class EasyPZ
         }
     }
     
-    /* Hold Zooming */
-    
-    /* Double Click Zoom */
-    
-    private dblClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
-    {
-        if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-        {
-        
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
-        {
-        
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-        {
-            let isDblClick = this.mouseDownTime - this.lastMouseDownTime < EasyPZ.DBLCLICK_ZOOM_DBLCLICKTIME;
-            let isHold = this.mouseUpTime - this.mouseDownTime > EasyPZ.DBLCLICK_MAX_HOLD_TIME;
-            
-            if (isDblClick && !isHold)
-            {
-                let scaleChange = inOut == 'in' ? EasyPZ.DBLCLICK_ZOOM_IN_SCALECHANGE : EasyPZ.DBLCLICK_ZOOM_OUT_SCALECHANGE;
-                this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: scaleChange});
-            }
-        }
-    }
     
     /* Dynamic / RubPointing Zoom */
     
@@ -1312,14 +1273,14 @@ class EasyPZ
 
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
-    let mode = {
+    const mode = {
         ids: ['SIMPLE_PAN'],
         settings: { minDistance: 3, delay: 300 },
         
         active: false,
         data: {lastPosition: {x: 0, y: 0}},
         
-        onClickTouch: (eventData: EasyPzCallbackData) =>
+        onClickTouch: () =>
         {
             mode.active = false;
             mode.data.lastPosition = {x: easypz.mousePos.x, y: easypz.mousePos.y};
@@ -1330,7 +1291,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             });
         },
         
-        onMove: (eventData: EasyPzCallbackData) =>
+        onMove: () =>
         {
             if(mode.active)
             {
@@ -1354,7 +1315,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
-    let mode = {
+    const mode = {
         ids: ['FLICK_PAN'],
         settings: { minDistance: 3, delay: 300, friction: 0.02 },
         
@@ -1365,7 +1326,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             momentum: null
         },
         
-        onClickTouch: (eventData: EasyPzCallbackData) =>
+        onClickTouch: () =>
         {
             mode.active = false;
             mode.data.positions = [{x: easypz.mousePos.x, y: easypz.mousePos.y, time: Date.now()}];
@@ -1381,7 +1342,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             });
         },
         
-        onMove: (eventData: EasyPzCallbackData) =>
+        onMove: () =>
         {
             if(mode.active)
             {
@@ -1393,7 +1354,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             }
         },
         
-        onClickTouchEnd: (eventData: EasyPzCallbackData) =>
+        onClickTouchEnd: () =>
         {
             if(mode.active)
             {
@@ -1429,7 +1390,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
-    let mode = {
+    const mode = {
         ids: ['HOLD_ZOOM_IN', 'HOLD_ZOOM_OUT', 'CLICK_HOLD_ZOOM_IN', 'CLICK_HOLD_ZOOM_OUT'],
         settings: { maxDistance: 3, delay: 350, zoomInScaleChangePerMs: -0.0015,
             zoomOutScaleChangePerMs: 0.003, doubleClickTimeout: 300 },
@@ -1480,7 +1441,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             });
         },
         
-        onMove: (eventData: EasyPzCallbackData) =>
+        onMove: () =>
         {
             if(mode.active)
             {
@@ -1491,6 +1452,35 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         onClickTouchEnd: () =>
         {
             mode.active = false;
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['DBLCLICK_ZOOM_IN', 'DBLCLICK_ZOOM_OUT'],
+        settings: { dblClickTime: 300,
+            zoomInScaleChange: 0.3,
+            zoomOutScaleChange: 5,
+            maxHoldTime: 200
+        },
+        
+        onClickTouchEnd: (eventData: EasyPzCallbackData) =>
+        {
+            let isDblClick = easypz.mouseDownTime - easypz.lastMouseDownTime < mode.settings.dblClickTime;
+            let isHold = easypz.mouseUpTime - easypz.mouseDownTime > mode.settings.maxHoldTime;
+            
+            if (isDblClick && !isHold)
+            {
+                const zoomingOut = eventData.modeName === 'DBLCLICK_ZOOM_OUT';
+                
+                let scaleChange = zoomingOut ? mode.settings.zoomOutScaleChange : mode.settings.zoomInScaleChange;
+                easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scaleChange});
+            }
         }
     };
     
