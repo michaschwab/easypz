@@ -1494,9 +1494,13 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 mode.data.momentum.stop();
             }
             mode.data.references = [];
-            mode.data.posStart1 = easypz.getRelativePosition(eventData.event.touches[0].clientX, eventData.event.touches[0].clientY);
-            mode.data.posStart2 = easypz.getRelativePosition(eventData.event.touches[1].clientX, eventData.event.touches[1].clientY);
-            easypz.resetAbsoluteScale.emit();
+            
+            if(eventData.event.touches && eventData.event.touches.length > 1)
+            {
+                mode.data.posStart1 = easypz.getRelativePosition(eventData.event.touches[0].clientX, eventData.event.touches[0].clientY);
+                mode.data.posStart2 = easypz.getRelativePosition(eventData.event.touches[1].clientX, eventData.event.touches[1].clientY);
+                easypz.resetAbsoluteScale.emit();
+            }
         },
         
         onMove(eventData: EasyPzCallbackData)
@@ -1574,7 +1578,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             let panned = {x: 0, y: 0};
             const direction = eventData.modeName === 'WHEEL_PAN_X' ? 'x' : 'y';
             panned[direction] = mode.settings.speed * sign;
-            this.onPanned.emit(panned);
+            easypz.onPanned.emit(panned);
         }
     };
     
