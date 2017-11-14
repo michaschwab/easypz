@@ -177,6 +177,7 @@ class EasyPzCallbackData
     mouseUpTime;
     lastMouseDownTime;
     lastMousePos;
+    modeName;
 }
 
 class EasyPzMode
@@ -669,7 +670,7 @@ class EasyPZ
         EasyPZ.modes.push(unresolvedMode);
     }
     
-    private getEventData(event) : EasyPzCallbackData
+    private getEventData(event, modeName) : EasyPzCallbackData
     {
         return {
             event: event,
@@ -677,7 +678,8 @@ class EasyPZ
             lastMouseDownTime: this.lastMouseDownTime,
             mouseUpTime: this.mouseUpTime,
             mousePos: this.mousePos,
-            lastMousePos: this.lastMousePos
+            lastMousePos: this.lastMousePos,
+            modeName: modeName
         };
     }
     
@@ -687,7 +689,7 @@ class EasyPZ
         {
             if(mode.onMultiTouch && this.enabledModes.indexOf(mode.id) !== -1)
             {
-                mode.onMultiTouch(this.getEventData(event));
+                mode.onMultiTouch(this.getEventData(event, mode.id));
             }
         });
         
@@ -728,30 +730,30 @@ class EasyPZ
             {
                 if(mode.onMove && this.enabledModes.indexOf(mode.id) !== -1)
                 {
-                    mode.onMove(this.getEventData(event));
+                    mode.onMove(this.getEventData(event, mode.id));
                 }
             }
             else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
             {
                 if(mode.onClickTouch && this.enabledModes.indexOf(mode.id) !== -1)
                 {
-                    mode.onClickTouch(this.getEventData(event));
+                    mode.onClickTouch(this.getEventData(event, mode.id));
                 }
             }
             else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
             {
                 if(mode.onClickTouchEnd && this.enabledModes.indexOf(mode.id) !== -1)
                 {
-                    mode.onClickTouchEnd(this.getEventData(event));
+                    mode.onClickTouchEnd(this.getEventData(event, mode.id));
                 }
             }
         });
         
         //this.maybeCall(EasyPZ.MODES.SIMPLE_PAN, () => this.simplePan(eventType, event));
         //this.maybeCall(EasyPZ.MODES.FLICK_PAN, () => this.flickPan(eventType, event));
-        this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in'));
+        //this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in'));
         this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_OUT, () => this.holdZoom(eventType, event, 'out'));
-        this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in', true));
+        //this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in', true));
         this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_OUT, () => this.holdZoom(eventType, event, 'out', true));
         this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_IN, () => this.dblClickZoom(eventType, event, 'in'));
         this.maybeCall(EasyPZ.MODES.DBLCLICK_ZOOM_OUT, () => this.dblClickZoom(eventType, event, 'out'));
@@ -819,7 +821,7 @@ class EasyPZ
         {
             if(mode.onWheel && this.enabledModes.indexOf(mode.id) !== -1)
             {
-                mode.onWheel(this.getEventData(event));
+                mode.onWheel(this.getEventData(event, mode.id));
             }
         });
         
@@ -843,7 +845,7 @@ class EasyPZ
         {
             if(mode.onRightClick && this.enabledModes.indexOf(mode.id) !== -1)
             {
-                mode.onRightClick(this.getEventData(event));
+                mode.onRightClick(this.getEventData(event, mode.id));
             }
         });
         
@@ -1453,28 +1455,100 @@ EasyPZ.addMode((onPanned, onZoomed, callbackAfterTimeoutOrMovement) =>
         
         onClickTouchEnd: (eventData: EasyPzCallbackData) =>
         {
+            if(mode.active)
+            {
+                mode.active = false;
+                
+                let referencePoints = mode.data.positions.filter(flickPos =>
+                {
+                    return flickPos.time >= Date.now() - 100 && flickPos.time <= Date.now() - 50;
+                });
+                
+                if(referencePoints.length == 0) return;
+                
+                let refPoint = referencePoints[0];
+                let dist = EasyPZ.getPositionDistance({x: refPoint.x, y: refPoint.y}, eventData.mousePos);
+                let flickDirection = {x: (eventData.mousePos.x - refPoint.x) / dist, y: (eventData.mousePos.y - refPoint.y) / dist};
+                
+                let time = Date.now() - refPoint.time;
+                let speed = dist / time;
+                mode.data.momentum = EasyPZ.momentumInteraction(speed, mode.settings.friction, (dist) =>
+                {
+                    let relativeMove = {x: flickDirection.x * dist, y: flickDirection.y * dist };
+                    onPanned.emit(relativeMove);
+                });
+                
+                mode.data.momentum.start();
+            }
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((onPanned, onZoomed, callbackAfterTimeoutOrMovement) =>
+{
+    let mode = {
+        id: 'HOLD_ZOOM_IN',
+        settings: { maxDistance: 3, delay: 300, zoomInScaleChangePerMs: -0.0015,
+            zoomOutScaleChangePerMs: 0.003, doubleClickTimeout: 300 },
+        
+        active: false,
+        data: { zoomingOut: false, zoomPos: {x: 0, y: 0} },
+        
+        onClickTouch: (eventData: EasyPzCallbackData) =>
+        {
+            let startPos = {x: eventData.mousePos.x, y: eventData.mousePos.y};
+            let holdZoomLastChange;
+            
+            let recursiveZoom = () =>
+            {
+                if(mode.active)
+                {
+                    let timePassed = Date.now() - holdZoomLastChange;
+                    let scaleChangePerMs = mode.data.zoomingOut ? mode.settings.zoomOutScaleChangePerMs : mode.settings.zoomInScaleChangePerMs;
+                    let scale = 1 + scaleChangePerMs * timePassed;
+                    onZoomed.emit({x: mode.data.zoomPos.x, y: mode.data.zoomPos.y, scaleChange: scale});
+                    holdZoomLastChange = Date.now();
+                    
+                    requestAnimationFrame(recursiveZoom);
+                }
+            };
+            
+            // If the pointer is moved within the first 300ms, it is not considered zooming.
+            callbackAfterTimeoutOrMovement(mode.settings.delay, mode.settings.maxDistance).then((dist) =>
+            {
+                mode.active = eventData.mouseUpTime < eventData.mouseDownTime && dist <= mode.settings.maxDistance;
+                
+                if(mode.active)
+                {
+                    holdZoomLastChange = Date.now();
+                    let hasClickedFirst = eventData.mouseDownTime - eventData.lastMouseDownTime < mode.settings.doubleClickTimeout;
+                    mode.data.zoomPos = {x: eventData.mousePos.x, y: eventData.mousePos.y};
+                    
+                    // start zooming
+                    let clickFirst = false;
+                    
+                    if(hasClickedFirst == clickFirst)
+                    {
+                        recursiveZoom();
+                    }
+                }
+            });
+        },
+        
+        onMove: (eventData: EasyPzCallbackData) =>
+        {
+            if(mode.active)
+            {
+                mode.data.zoomPos = {x: eventData.mousePos.x, y: eventData.mousePos.y};
+            }
+        },
+        
+        onClickTouchEnd: () =>
+        {
             mode.active = false;
-            
-            let referencePoints = mode.data.positions.filter(flickPos =>
-            {
-                return flickPos.time >= Date.now() - 100 && flickPos.time <= Date.now() - 50;
-            });
-            console.log(referencePoints);
-            if(referencePoints.length == 0) return;
-            
-            let refPoint = referencePoints[0];
-            let dist = EasyPZ.getPositionDistance({x: refPoint.x, y: refPoint.y}, eventData.mousePos);
-            let flickDirection = {x: (eventData.mousePos.x - refPoint.x) / dist, y: (eventData.mousePos.y - refPoint.y) / dist};
-            
-            let time = Date.now() - refPoint.time;
-            let speed = dist / time;
-            mode.data.momentum = EasyPZ.momentumInteraction(speed, mode.settings.friction, (dist) =>
-            {
-                let relativeMove = {x: flickDirection.x * dist, y: flickDirection.y * dist };
-                onPanned.emit(relativeMove);
-            });
-            
-            mode.data.momentum.start();
         }
     };
     
