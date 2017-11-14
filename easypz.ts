@@ -192,7 +192,7 @@ class EasyPzMode
 
 class EasyPZ
 {
-    public static MODES = {'HOLD_ZOOM_IN': 0, 'HOLD_ZOOM_OUT': 1, 'CLICK_HOLD_ZOOM_IN': 2, 'CLICK_HOLD_ZOOM_OUT': 3, 'SIMPLE_PAN': 4, 'DBLCLICK_ZOOM_IN': 5, 'DBLCLICK_ZOOM_OUT': 6, 'DBLRIGHTCLICK_ZOOM_IN': 7, 'DBLRIGHTCLICK_ZOOM_OUT': 8, 'WHEEL_ZOOM': 9, 'WHEEL_PAN_X': 10, 'WHEEL_PAN_Y': 11, 'BRUSH_ZOOM_X': 12, 'BRUSH_ZOOM_Y': 13, 'BRUSH_ZOOM_2D': 14, 'DYNAMIC_ZOOM_X_STATIC': 15, 'DYNAMIC_ZOOM_X_ORIGINAL_PAN': 16, 'DYNAMIC_ZOOM_X_NORMAL_PAN': 17, 'DYNAMIC_ZOOM_X_ADJUSTABLE': 18, 'DYNAMIC_ZOOM_Y_STATIC': 19, 'DYNAMIC_ZOOM_Y_ORIGINAL_PAN': 20, 'DYNAMIC_ZOOM_Y_NORMAL_PAN': 21, 'DYNAMIC_ZOOM_Y_ADJUSTABLE': 22, 'PINCH_ZOOM': 23, 'PINCH_ZOOM_QUADRATIC': 24, 'PINCH_ZOOM_POWER_FOUR': 25, 'FLICK_PAN': 26, 'RUB_ZOOM_IN_X': 27, 'RUB_ZOOM_IN_Y': 28, 'RUB_ZOOM_OUT_X': 29, 'RUB_ZOOM_OUT_Y': 30, 'PINCH_PAN': 31, 'WHEEL_ZOOM_MOMENTUM': 32, 'PINCH_ZOOM_MOMENTUM': 33 };
+    public static MODES = {'HOLD_ZOOM_IN': 0, 'HOLD_ZOOM_OUT': 1, 'CLICK_HOLD_ZOOM_IN': 2, 'CLICK_HOLD_ZOOM_OUT': 3, 'SIMPLE_PAN': 4, 'DBLCLICK_ZOOM_IN': 5, 'DBLCLICK_ZOOM_OUT': 6, 'DBLRIGHTCLICK_ZOOM_IN': 7, 'DBLRIGHTCLICK_ZOOM_OUT': 8, 'WHEEL_ZOOM': 9, 'WHEEL_PAN_X': 10, 'WHEEL_PAN_Y': 11, 'BRUSH_ZOOM_X': 12, 'BRUSH_ZOOM_Y': 13, 'BRUSH_ZOOM': 14, 'DYNAMIC_ZOOM_X_STATIC': 15, 'DYNAMIC_ZOOM_X_ORIGINAL_PAN': 16, 'DYNAMIC_ZOOM_X_NORMAL_PAN': 17, 'DYNAMIC_ZOOM_X_ADJUSTABLE': 18, 'DYNAMIC_ZOOM_Y_STATIC': 19, 'DYNAMIC_ZOOM_Y_ORIGINAL_PAN': 20, 'DYNAMIC_ZOOM_Y_NORMAL_PAN': 21, 'DYNAMIC_ZOOM_Y_ADJUSTABLE': 22, 'PINCH_ZOOM': 23, 'PINCH_ZOOM_QUADRATIC': 24, 'PINCH_ZOOM_POWER_FOUR': 25, 'FLICK_PAN': 26, 'RUB_ZOOM_IN_X': 27, 'RUB_ZOOM_IN_Y': 28, 'RUB_ZOOM_OUT_X': 29, 'RUB_ZOOM_OUT_Y': 30, 'PINCH_PAN': 31, 'WHEEL_ZOOM_MOMENTUM': 32, 'PINCH_ZOOM_MOMENTUM': 33 };
     private static MOUSE_EVENT_TYPES = {'MOUSE_DOWN': 0, 'MOUSE_MOVE': 1, 'MOUSE_UP': 2};
     
     public lastMouseDownTime = 0;
@@ -234,7 +234,7 @@ class EasyPZ
     
     private totalTransform = { scale: 1, translateX: 0, translateY: 0};
     private totalTransformSnapshot = { scale: 1, translateX: 0, translateY: 0};
-    private el: HTMLElement;
+    public el: HTMLElement;
     
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
@@ -635,7 +635,7 @@ class EasyPZ
         // this is just to make sure it is disabled
         // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_X, () => this.brushZoom(eventType, event, 'x'));
         // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_Y, () => this.brushZoom(eventType, event, 'y'));
-        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_2D, () => this.brushZoom(eventType, event, 'xy'));
+        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM, () => this.brushZoom(eventType, event, 'xy'));
         //
         /*this.maybeCall(EasyPZ.MODES.PINCH_ZOOM, () => this.pinchZoom(eventType, event));
         this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_QUADRATIC, () => this.pinchZoom(eventType, event, 'quadratic'));
@@ -719,7 +719,7 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.DYNAMIC_ZOOM_Y_ADJUSTABLE, () => this.dynamicZoom(eventType, event, 'y', 'adjustable'));
         // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_X, () => this.brushZoom(eventType, event, 'x'));
         // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_Y, () => this.brushZoom(eventType, event, 'y'));
-        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_2D, () => this.brushZoom(eventType, event, 'xy'));
+        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM, () => this.brushZoom(eventType, event, 'xy'));
         this.maybeCall(EasyPZ.MODES.RUB_ZOOM_IN_X, () => this.rubZoom(eventType, event, 'x', 'in'));
         this.maybeCall(EasyPZ.MODES.RUB_ZOOM_IN_Y, () => this.rubZoom(eventType, event, 'y', 'in'));
         this.maybeCall(EasyPZ.MODES.RUB_ZOOM_OUT_X, () => this.rubZoom(eventType, event, 'x', 'out'));
@@ -1507,7 +1507,8 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         },
         active: false,
         data: {
-            startPos: {x: 0, y: 0}
+            startPos: {x: 0, y: 0},
+            el: null
         },
         
         onClickTouch: (eventData: EasyPzCallbackData) =>
@@ -1515,21 +1516,47 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             if(easypz.numberOfPointers !== 1)
             {
                 mode.active = false;
+                
+                if(mode.data.el)
+                {
+                    mode.data.el.style.display = 'none';
+                }
             }
             else
             {
                 mode.active = true;
+                
+                if(!mode.data.el)
+                {
+                    mode.data.el = document.createElement('div');
+                    mode.data.el.style.border = '1px solid #c00';
+                    mode.data.el.style.background = 'rgba(200,50,50,0.3)';
+                    mode.data.el.style.position = 'absolute';
+                    document.body.appendChild(mode.data.el);
+                }
+                
+                //this.brushZoomDirection = direction;
                 mode.data.startPos = {x: easypz.mousePos.x, y: easypz.mousePos.y};
                 
                 easypz.callbackAfterTimeoutOrMovement(mode.settings.delay, mode.settings.minDistance).then((dist) =>
                 {
                     mode.active = easypz.numberOfPointers == 1 && dist > mode.settings.minDistance;
+                    
+                    if(!mode.active && mode.data.el)
+                    {
+                        mode.data.el.style.display = 'none';
+                    }
                 });
                 setTimeout(() =>
                 {
                     if(easypz.numberOfPointers !== 1)
                     {
                         mode.active = false;
+                        
+                        if(mode.data.el)
+                        {
+                            mode.data.el.style.display = 'none';
+                        }
                     }
                 }, mode.settings.delay);
             }
@@ -1540,6 +1567,25 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             if(easypz.numberOfPointers !== 1)
             {
                 mode.active = false;
+                
+                if(mode.data.el)
+                {
+                    mode.data.el.style.display = 'none';
+                }
+            }
+            
+            if(mode.active)
+            {
+                const left = easypz.mousePos.x < mode.data.startPos.x ? easypz.mousePos.x : mode.data.startPos.x;
+                const width = Math.abs(mode.data.startPos.x - easypz.mousePos.x);
+                const top = easypz.mousePos.y < mode.data.startPos.y ? easypz.mousePos.y : mode.data.startPos.y;
+                const height = Math.abs(mode.data.startPos.y - easypz.mousePos.y);
+                
+                mode.data.el.style.display = 'block';
+                mode.data.el.style.left = left + 'px';
+                mode.data.el.style.top = top + 'px';
+                mode.data.el.style.width = width + 'px';
+                mode.data.el.style.height = height + 'px';
             }
         },
         
@@ -1548,6 +1594,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             if(mode.active)
             {
                 mode.active = false;
+                mode.data.el.style.display = 'none';
                 
                 if(Date.now() - easypz.mouseDownTime > mode.settings.minTime)
                 {
