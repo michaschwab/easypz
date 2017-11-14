@@ -690,7 +690,11 @@ class EasyPZ
     {
         if(EasyPZ.isRightClick(event))
         {
-            return this.onRightClick(eventType, event);
+            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
+            {
+                this.onRightClick(eventType, event);
+            }
+            return;
         }
         
         this.modes.forEach(mode =>
@@ -832,11 +836,7 @@ class EasyPZ
                 }
             });
         });
-        
-        this.maybeCall(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_IN, () => this.dblRightClickZoom(eventType, event, 'in'));
-        this.maybeCall(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT, () => this.dblRightClickZoom(eventType, event, 'out'));
     }
-    
     
     public static momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
     {
@@ -1062,30 +1062,6 @@ class EasyPZ
         this.onPanned.emit(panned);
     }
     
-    /* Double Right Click Zoom Out */
-    
-    private dblRightClickZoom(eventType: number, event: MouseEvent|TouchEvent, inOut: string = 'in')
-    {
-        if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-        {
-        
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
-        {
-        
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-        {
-            let isDblClick = this.mouseDownTime - this.lastMouseDownTime < EasyPZ.DBLCLICK_ZOOM_DBLCLICKTIME;
-            let isHold = this.mouseUpTime - this.mouseDownTime > EasyPZ.DBLCLICK_MAX_HOLD_TIME;
-            
-            if (isDblClick && !isHold)
-            {
-                let scaleChange = inOut == 'in' ? EasyPZ.DBLRIGHTCLICK_ZOOM_IN_SCALECHANGE : EasyPZ.DBLRIGHTCLICK_ZOOM_OUT_SCALECHANGE;
-                this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: scaleChange});
-            }
-        }
-    }
     
     /* Pinch Zoom */
     
@@ -1462,10 +1438,10 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
-        ids: ['DBLCLICK_ZOOM_IN', 'DBLCLICK_ZOOM_OUT'],
+        ids: ['DBLCLICK_ZOOM_IN', 'DBLCLICK_ZOOM_OUT', 'DBLRIGHTCLICK_ZOOM_IN', 'DBLRIGHTCLICK_ZOOM_OUT'],
         settings: { dblClickTime: 300,
-            zoomInScaleChange: 0.3,
-            zoomOutScaleChange: 5,
+            zoomInScaleChange: 0.33,
+            zoomOutScaleChange: 3,
             maxHoldTime: 200
         },
         
@@ -1473,10 +1449,26 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         {
             let isDblClick = easypz.mouseDownTime - easypz.lastMouseDownTime < mode.settings.dblClickTime;
             let isHold = easypz.mouseUpTime - easypz.mouseDownTime > mode.settings.maxHoldTime;
+            let isNotRightClick = eventData.modeName.substr(0, 'DBLCLICK'.length) === 'DBLCLICK';
             
-            if (isDblClick && !isHold)
+            if (isDblClick && !isHold && isNotRightClick)
             {
                 const zoomingOut = eventData.modeName === 'DBLCLICK_ZOOM_OUT';
+                
+                let scaleChange = zoomingOut ? mode.settings.zoomOutScaleChange : mode.settings.zoomInScaleChange;
+                easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scaleChange});
+            }
+        },
+        
+        onRightClick: (eventData: EasyPzCallbackData) =>
+        {
+            let isDblClick = easypz.mouseDownTime - easypz.lastMouseDownTime < mode.settings.dblClickTime;
+            let isHold = easypz.mouseUpTime - easypz.mouseDownTime > mode.settings.maxHoldTime;
+            let isRightClick = eventData.modeName.substr(0, 'DBLRIGHTCLICK'.length) === 'DBLRIGHTCLICK';
+            
+            if (isDblClick && !isHold && isRightClick)
+            {
+                const zoomingOut = eventData.modeName === 'DBLRIGHTCLICK_ZOOM_OUT';
                 
                 let scaleChange = zoomingOut ? mode.settings.zoomOutScaleChange : mode.settings.zoomInScaleChange;
                 easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scaleChange});
