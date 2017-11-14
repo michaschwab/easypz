@@ -176,6 +176,7 @@ class EasyPzCallbackData
     mouseDownTime;
     mouseUpTime;
     lastMouseDownTime;
+    lastMousePos;
 }
 
 class EasyPzMode
@@ -675,7 +676,8 @@ class EasyPZ
             mouseDownTime: this.mouseDownTime,
             lastMouseDownTime: this.lastMouseDownTime,
             mouseUpTime: this.mouseUpTime,
-            mousePos: this.mousePos
+            mousePos: this.mousePos,
+            lastMousePos: this.lastMousePos
         };
     }
     
@@ -729,17 +731,24 @@ class EasyPZ
                     mode.onMove(this.getEventData(event));
                 }
             }
-            else
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
             {
                 if(mode.onClickTouch && this.enabledModes.indexOf(mode.id) !== -1)
                 {
                     mode.onClickTouch(this.getEventData(event));
                 }
             }
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
+            {
+                if(mode.onClickTouchEnd && this.enabledModes.indexOf(mode.id) !== -1)
+                {
+                    mode.onClickTouchEnd(this.getEventData(event));
+                }
+            }
         });
         
         //this.maybeCall(EasyPZ.MODES.SIMPLE_PAN, () => this.simplePan(eventType, event));
-        this.maybeCall(EasyPZ.MODES.FLICK_PAN, () => this.flickPan(eventType, event));
+        //this.maybeCall(EasyPZ.MODES.FLICK_PAN, () => this.flickPan(eventType, event));
         this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in'));
         this.maybeCall(EasyPZ.MODES.HOLD_ZOOM_OUT, () => this.holdZoom(eventType, event, 'out'));
         this.maybeCall(EasyPZ.MODES.CLICK_HOLD_ZOOM_IN, () => this.holdZoom(eventType, event, 'in', true));
@@ -842,63 +851,8 @@ class EasyPZ
         this.maybeCall(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT, () => this.dblRightClickZoom(eventType, event, 'out'));
     }
     
-    /* Flick Panning */
     
-    private flickPan(eventType: number, event: MouseEvent|TouchEvent)
-    {
-        if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-        {
-            this.flickPanning = false;
-            this.flickPositions = [{x: this.mousePos.x, y: this.mousePos.y, time: Date.now()}];
-            if(this.flickMomentum)
-            {
-                this.flickMomentum.stop();
-            }
-            
-            // If the pointer is not moved to drag the content within the first 300ms, it is not considered panning.
-            this.callbackAfterTimeoutOrMovement(EasyPZ.SIMPLE_PANNING_DELAY, EasyPZ.SIMPLE_PANNING_MIN_DISTANCE).then((dist) =>
-            {
-                this.flickPanning = this.mouseUpTime < this.mouseDownTime && dist >= EasyPZ.SIMPLE_PANNING_MIN_DISTANCE;
-            });
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
-        {
-            if(this.flickPanning)
-            {
-                let relativeX = this.mousePos.x - this.lastMousePos.x;
-                let relativeY = this.mousePos.y - this.lastMousePos.y;
-                this.onPanned.emit({x: relativeX, y: relativeY});
-                this.flickPositions.push({x: this.mousePos.x, y: this.mousePos.y, time: Date.now()});
-            }
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-        {
-            this.flickPanning = false;
-            
-            let referencePoints = this.flickPositions.filter(flickPos =>
-            {
-                return flickPos.time >= Date.now() - 100 && flickPos.time <= Date.now() - 50;
-            });
-            
-            if(referencePoints.length == 0) return;
-            
-            let refPoint = referencePoints[0];
-            let dist = EasyPZ.getPositionDistance({x: refPoint.x, y: refPoint.y}, this.mousePos);
-            let flickDirection = {x: (this.mousePos.x - refPoint.x) / dist, y: (this.mousePos.y - refPoint.y) / dist};
-            
-            let time = Date.now() - refPoint.time;
-            let speed = dist / time;
-            this.flickMomentum = this.momentumInteraction(speed, EasyPZ.FLICK_PANNING_FRICTION, (dist) =>
-            {
-                let relativeMove = {x: flickDirection.x * dist, y: flickDirection.y * dist };
-                this.onPanned.emit(relativeMove);
-            });
-            
-            this.flickMomentum.start();
-        }
-    }
-    
-    private momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
+    public static momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
     {
         let startTime = Date.now();
         let lastMoveTime = Date.now();
@@ -1182,7 +1136,7 @@ class EasyPZ
         let absScale = Math.abs(relativeScale) * EasyPZ.WHEEL_ZOOM_MOMENTUM_SPEED_PERCENTAGE;
         let scaleSign = sign(relativeScale);
         
-        this.flickMomentum = this.momentumInteraction(absScale, EasyPZ.WHEEL_ZOOM_MOMENTUM_FRICTION, (dist) =>
+        this.flickMomentum = EasyPZ.momentumInteraction(absScale, EasyPZ.WHEEL_ZOOM_MOMENTUM_FRICTION, (dist) =>
         {
             let newScale = 1 - scaleSign * dist;
             this.onZoomed.emit({x: this.mousePos.x, y: this.mousePos.y, scaleChange: newScale});
@@ -1285,7 +1239,7 @@ class EasyPZ
                 let absScaleChangeSpeed = Math.abs(scaleChangeSpeed);
                 let scaleSign = sign(scaleChangeSpeed);
                 
-                this.pinchZoomMomentum = this.momentumInteraction(absScaleChangeSpeed, EasyPZ.PINCH_ZOOM_FRICTION, (dist) =>
+                this.pinchZoomMomentum = EasyPZ.momentumInteraction(absScaleChangeSpeed, EasyPZ.PINCH_ZOOM_FRICTION, (dist) =>
                 {
                     let newScale = lastScale + scaleSign * dist;
                     this.onZoomed.emit({x: this.pinchZoomPos.x, y: this.pinchZoomPos.y, absoluteScaleChange: newScale, targetX: this.pinchZoomCenterPos.x, targetY: this.pinchZoomCenterPos.y});
@@ -1449,6 +1403,78 @@ EasyPZ.addMode((onPanned, onZoomed, callbackAfterTimeoutOrMovement) =>
         onClickTouchEnd: () =>
         {
             mode.active = false;
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((onPanned, onZoomed, callbackAfterTimeoutOrMovement) =>
+{
+    let mode = {
+        id: 'FLICK_PAN',
+        settings: { minDistance: 3, delay: 300, friction: 0.02 },
+        
+        active: false,
+        data: {
+            continueTime: 0,
+            positions: [],
+            momentum: null
+        },
+        
+        onClickTouch: (eventData: EasyPzCallbackData) =>
+        {
+            mode.active = false;
+            mode.data.positions = [{x: eventData.mousePos.x, y: eventData.mousePos.y, time: Date.now()}];
+            
+            if(mode.data.momentum)
+            {
+                mode.data.momentum.stop();
+            }
+            
+            callbackAfterTimeoutOrMovement(mode.settings.delay, mode.settings.minDistance).then((dist) =>
+            {
+                mode.active = eventData.mouseUpTime < eventData.mouseDownTime && dist >= mode.settings.minDistance;
+            });
+        },
+        
+        onMove: (eventData: EasyPzCallbackData) =>
+        {
+            if(mode.active)
+            {
+                let relativeX = eventData.mousePos.x - eventData.lastMousePos.x;
+                let relativeY = eventData.mousePos.y - eventData.lastMousePos.y;
+                onPanned.emit({x: relativeX, y: relativeY});
+                
+                mode.data.positions.push({x: eventData.mousePos.x, y: eventData.mousePos.y, time: Date.now()});
+            }
+        },
+        
+        onClickTouchEnd: (eventData: EasyPzCallbackData) =>
+        {
+            mode.active = false;
+            
+            let referencePoints = mode.data.positions.filter(flickPos =>
+            {
+                return flickPos.time >= Date.now() - 100 && flickPos.time <= Date.now() - 50;
+            });
+            console.log(referencePoints);
+            if(referencePoints.length == 0) return;
+            
+            let refPoint = referencePoints[0];
+            let dist = EasyPZ.getPositionDistance({x: refPoint.x, y: refPoint.y}, eventData.mousePos);
+            let flickDirection = {x: (eventData.mousePos.x - refPoint.x) / dist, y: (eventData.mousePos.y - refPoint.y) / dist};
+            
+            let time = Date.now() - refPoint.time;
+            let speed = dist / time;
+            mode.data.momentum = EasyPZ.momentumInteraction(speed, mode.settings.friction, (dist) =>
+            {
+                let relativeMove = {x: flickDirection.x * dist, y: flickDirection.y * dist };
+                onPanned.emit(relativeMove);
+            });
+            
+            mode.data.momentum.start();
         }
     };
     
