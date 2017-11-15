@@ -26,11 +26,11 @@ class EasyPZLoader
         if(!!window['onPanned'])
             settings.onPanned = window['onPanned'];
         if(!!window['onZoomed'])
-            settings.onPanned = window['onZoomed'];
+            settings.onZoomed = window['onZoomed'];
         if(!!window['onTransformed'])
-            settings.onPanned = window['onTransformed'];
+            settings.onTransformed = window['onTransformed'];
         if(!!window['onResetAbsoluteScale'])
-            settings.onPanned = window['onResetAbsoluteScale'];
+            settings.onResetAbsoluteScale = window['onResetAbsoluteScale'];
         
         let settingsObj = {};
         try
@@ -592,13 +592,36 @@ class EasyPZ
     {
         this.modes.forEach(mode =>
         {
-            mode.ids.forEach(modeId =>
+            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
             {
-                if(mode.onMultiTouch && this.enabledModes.indexOf(modeId) !== -1)
+                mode.ids.forEach(modeId =>
                 {
-                    mode.onMultiTouch(this.getEventData(event, modeId));
-                }
-            });
+                    if(mode.onMove && this.enabledModes.indexOf(modeId) !== -1)
+                    {
+                        mode.onMove(this.getEventData(event, modeId));
+                    }
+                });
+            }
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
+            {
+                mode.ids.forEach(modeId =>
+                {
+                    if(mode.onClickTouch && this.enabledModes.indexOf(modeId) !== -1)
+                    {
+                        mode.onClickTouch(this.getEventData(event, modeId));
+                    }
+                });
+            }
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
+            {
+                mode.ids.forEach(modeId =>
+                {
+                    if(mode.onClickTouchEnd && this.enabledModes.indexOf(modeId) !== -1)
+                    {
+                        mode.onClickTouchEnd(this.getEventData(event, modeId));
+                    }
+                });
+            }
         });
     }
     
@@ -1186,7 +1209,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Wheel Pan */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -1212,6 +1235,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
+/* Brush Zoom */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -1458,7 +1482,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Rub Zoom */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
