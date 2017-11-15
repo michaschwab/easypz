@@ -208,10 +208,6 @@ class EasyPZ
     
     private hasUsedTouch = false;
     
-    static RUB_ZOOM_SCALE_CHANGE = 0.02;
-    static RUB_ZOOM_MIN_DISTANCE = 15;
-    static RUB_ZOOM_MIN_DISTANCE_AFTER_DIRECTION_CHANGE = 10;
-    
     static DIMENSIONS = ['x', 'y'];
     
     private enabledModes = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
@@ -619,17 +615,6 @@ class EasyPZ
                 }
             });
         });
-        
-        // this is just to make sure it is disabled
-        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_X, () => this.brushZoom(eventType, event, 'x'));
-        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM_Y, () => this.brushZoom(eventType, event, 'y'));
-        // this.maybeCall(EasyPZ.MODES.BRUSH_ZOOM, () => this.brushZoom(eventType, event, 'xy'));
-        //
-        /*this.maybeCall(EasyPZ.MODES.PINCH_ZOOM, () => this.pinchZoom(eventType, event));
-        this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_QUADRATIC, () => this.pinchZoom(eventType, event, 'quadratic'));
-        this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_POWER_FOUR, () => this.pinchZoom(eventType, event, 'power_four'));
-        this.maybeCall(EasyPZ.MODES.PINCH_ZOOM_MOMENTUM, () => this.pinchZoom(eventType, event, 'linear', true));
-        this.maybeCall(EasyPZ.MODES.PINCH_PAN, () => this.pinchZoom(eventType, event, 'fixed'));*/
     }
     
     private onMouseTouchUp(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
@@ -688,11 +673,6 @@ class EasyPZ
                 });
             }
         });
-        
-        this.maybeCall(EasyPZ.MODES.RUB_ZOOM_IN_X, () => this.rubZoom(eventType, event, 'x', 'in'));
-        this.maybeCall(EasyPZ.MODES.RUB_ZOOM_IN_Y, () => this.rubZoom(eventType, event, 'y', 'in'));
-        this.maybeCall(EasyPZ.MODES.RUB_ZOOM_OUT_X, () => this.rubZoom(eventType, event, 'x', 'out'));
-        this.maybeCall(EasyPZ.MODES.RUB_ZOOM_OUT_Y, () => this.rubZoom(eventType, event, 'y', 'out'));
     }
     
     private onMouseUp(event: MouseEvent)
@@ -809,68 +789,6 @@ class EasyPZ
         }
     }
     
-    private rubZooming = false;
-    private rubZoomHasChangedDirection = false;
-    private rubZoomHasChangedDirectionSign = 0;
-    private rubZoomHasChangedDirectionDirection = 'x';
-    private rubZoomPosition = null;
-    private rubZoomReference = null;
-    
-    private rubZoom(eventType: number, event: MouseEvent|TouchEvent, direction: string = 'x', inOut: string = 'in')
-    {
-        if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-        {
-            this.rubZooming = false;
-            this.rubZoomPosition = {x: this.mousePos.x, y: this.mousePos.y};
-            this.rubZoomReference = {x: this.mousePos.x, y: this.mousePos.y};
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
-        {
-            if(this.rubZoomReference)
-            {
-                let distance = Math.abs(this.rubZoomReference[direction] - this.mousePos[direction]);
-                
-                let signBefore = sign(this.lastMousePos[direction] - this.rubZoomReference[direction]);
-                let signNow = sign(this.mousePos[direction] - this.lastMousePos[direction]);
-                
-                if(signBefore != 0 && signNow != 0 && signBefore != signNow && distance > EasyPZ.RUB_ZOOM_MIN_DISTANCE)
-                {
-                    this.rubZoomReference = {x: this.mousePos.x, y: this.mousePos.y};
-                    distance = 0;
-                    this.rubZoomHasChangedDirection = true;
-                    this.rubZoomHasChangedDirectionSign = signNow;
-                    this.rubZoomHasChangedDirectionDirection = direction;
-                }
-                
-                if(!this.rubZooming && this.rubZoomHasChangedDirection && direction == this.rubZoomHasChangedDirectionDirection && signNow != this.rubZoomHasChangedDirectionSign)
-                {
-                    this.rubZoomHasChangedDirection = false;
-                }
-                
-                if(this.rubZoomHasChangedDirection && distance > EasyPZ.RUB_ZOOM_MIN_DISTANCE_AFTER_DIRECTION_CHANGE)
-                {
-                    this.rubZooming = true;
-                }
-                
-                let distanceSinceLast = Math.abs(this.mousePos[direction] - this.lastMousePos[direction]);
-                if(this.rubZooming && distanceSinceLast)
-                {
-                    let direction = inOut == 'in' ? 1 : -1;
-                    let zoomPos = {x: (this.mousePos.x + this.rubZoomReference.x)/2, y: (this.mousePos.y + this.rubZoomReference.y)/2};
-                    let scaleChange = 1 - EasyPZ.RUB_ZOOM_SCALE_CHANGE * distanceSinceLast * direction;
-                    
-                    this.onZoomed.emit({x: zoomPos.x, y: zoomPos.y, scaleChange: scaleChange});
-                }
-            }
-        }
-        else if(eventType == EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-        {
-            this.rubZooming = false;
-            this.rubZoomPosition = null;
-            this.rubZoomReference = null;
-            this.rubZoomHasChangedDirection = false;
-        }
-    }
     
     /* Useful functions */
     
@@ -1549,6 +1467,89 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         onClickTouchEnd: () =>
         {
             mode.active = false;
+        }
+    };
+    
+    return mode;
+});
+
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['RUB_ZOOM_IN_X', 'RUB_ZOOM_IN_Y', 'RUB_ZOOM_OUT_X', 'RUB_ZOOM_OUT_Y'],
+        settings: {
+            speed: 0.02,
+            minDistance: 15,
+            minDistanceAfterDirectionChange: 10
+        },
+        active: false,
+        data: {
+            direction: 'x',
+            
+            hasChangedDirection: false,
+            hasChangedDirectionSign: 0,
+            hasChangedDirectionDirection:'x',
+            
+            zoomPosition: null,
+            zoomReference: null
+        },
+        
+        onClickTouch: () =>
+        {
+            mode.active = false;
+            
+            mode.data.zoomPosition = {x: easypz.mousePos.x, y: easypz.mousePos.y};
+            mode.data.zoomReference = {x: easypz.mousePos.x, y: easypz.mousePos.y};
+        },
+        
+        onMove: (eventData: EasyPzCallbackData) =>
+        {
+            if(mode.data.zoomReference)
+            {
+                const direction = eventData.modeName.substr(eventData.modeName.length - 1).toLowerCase();
+                let distance = Math.abs(mode.data.zoomReference[direction] - easypz.mousePos[direction]);
+    
+                let signBefore = sign(easypz.lastMousePos[direction] - mode.data.zoomReference[direction]);
+                let signNow = sign(easypz.mousePos[direction] - easypz.lastMousePos[direction]);
+    
+                if(signBefore != 0 && signNow != 0 && signBefore != signNow && distance > mode.settings.minDistance)
+                {
+                    mode.data.zoomReference = {x: easypz.mousePos.x, y: easypz.mousePos.y};
+                    distance = 0;
+                    mode.data.hasChangedDirection = true;
+                    mode.data.hasChangedDirectionSign = signNow;
+                    mode.data.hasChangedDirectionDirection = direction;
+                }
+    
+                if(!mode.active && mode.data.hasChangedDirection && direction == mode.data.hasChangedDirectionDirection && signNow != mode.data.hasChangedDirectionSign)
+                {
+                    mode.data.hasChangedDirection = false;
+                }
+    
+                if(mode.data.hasChangedDirection && distance > mode.settings.minDistanceAfterDirectionChange)
+                {
+                    mode.active = true;
+                }
+    
+                let distanceSinceLast = Math.abs(easypz.mousePos[direction] - easypz.lastMousePos[direction]);
+                if(mode.active && distanceSinceLast)
+                {
+                    const directionValue = eventData.modeName.substr(0, 'RUB_ZOOM_IN'.length) === 'RUB_ZOOM_IN' ? 1 : -1;
+                    const zoomPos = {x: (easypz.mousePos.x + mode.data.zoomReference.x)/2, y: (easypz.mousePos.y + mode.data.zoomReference.y)/2};
+                    const scaleChange = 1 - mode.settings.speed * distanceSinceLast * directionValue;
+        
+                    easypz.onZoomed.emit({x: zoomPos.x, y: zoomPos.y, scaleChange: scaleChange});
+                }
+            }
+        },
+        
+        onClickTouchEnd: () =>
+        {
+            mode.active = false;
+            mode.data.zoomPosition = null;
+            mode.data.zoomReference = null;
+            mode.data.hasChangedDirection = false;
         }
     };
     
