@@ -588,40 +588,34 @@ class EasyPZ
         };
     }
     
-    private onMultiTouchEvent(eventType: number, event: TouchEvent)
+    private getActiveModes()
     {
+        let modes : { mode: EasyPzMode, activeId: string}[] = [];
+        
         this.modes.forEach(mode =>
         {
-            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
+            mode.ids.forEach(modeId =>
             {
-                mode.ids.forEach(modeId =>
+                if(this.enabledModes.indexOf(modeId) !== -1)
                 {
-                    if(mode.onMove && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onMove(this.getEventData(event, modeId));
-                    }
-                });
-            }
-            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-            {
-                mode.ids.forEach(modeId =>
-                {
-                    if(mode.onClickTouch && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onClickTouch(this.getEventData(event, modeId));
-                    }
-                });
-            }
-            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-            {
-                mode.ids.forEach(modeId =>
-                {
-                    if(mode.onClickTouchEnd && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onClickTouchEnd(this.getEventData(event, modeId));
-                    }
-                });
-            }
+                    modes.push({ mode: mode, activeId: modeId });
+                }
+            });
+        });
+        
+        return modes;
+    }
+    
+    private onMultiTouchEvent(eventType: number, event: TouchEvent)
+    {
+        this.getActiveModes().forEach(modeData =>
+        {
+            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE && modeData.mode.onMove)
+                modeData.mode.onMove(this.getEventData(event, modeData.activeId));
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN && modeData.mode.onClickTouch)
+                modeData.mode.onClickTouch(this.getEventData(event, modeData.activeId));
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP && modeData.mode.onClickTouchEnd)
+                modeData.mode.onClickTouchEnd(this.getEventData(event, modeData.activeId));
         });
     }
     
@@ -647,39 +641,15 @@ class EasyPZ
             }
             return;
         }
-        
-        this.modes.forEach(mode =>
+    
+        this.getActiveModes().forEach(modeData =>
         {
-            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE)
-            {
-                mode.ids.forEach(modeId =>
-                {
-                    if(mode.onMove && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onMove(this.getEventData(event, modeId));
-                    }
-                });
-            }
-            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
-            {
-                mode.ids.forEach(modeId =>
-                {
-                    if(mode.onClickTouch && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onClickTouch(this.getEventData(event, modeId));
-                    }
-                });
-            }
-            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP)
-            {
-                mode.ids.forEach(modeId =>
-                {
-                    if(mode.onClickTouchEnd && this.enabledModes.indexOf(modeId) !== -1)
-                    {
-                        mode.onClickTouchEnd(this.getEventData(event, modeId));
-                    }
-                });
-            }
+            if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE && modeData.mode.onMove)
+                modeData.mode.onMove(this.getEventData(event, modeData.activeId));
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN && modeData.mode.onClickTouch)
+                modeData.mode.onClickTouch(this.getEventData(event, modeData.activeId));
+            else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP && modeData.mode.onClickTouchEnd)
+                modeData.mode.onClickTouchEnd(this.getEventData(event, modeData.activeId));
         });
     }
     
@@ -727,17 +697,14 @@ class EasyPZ
     private onWheel(event: WheelEvent)
     {
         let captured = false;
-        
-        this.modes.forEach(mode =>
+    
+        this.getActiveModes().forEach(modeData =>
         {
-            mode.ids.forEach(modeId =>
+            if(modeData.mode.onWheel)
             {
-                if(mode.onWheel && this.enabledModes.indexOf(modeId) !== -1)
-                {
-                    mode.onWheel(this.getEventData(event, modeId));
-                    captured = true;
-                }
-            });
+                modeData.mode.onWheel(this.getEventData(event, modeData.activeId));
+                captured = true;
+            }
         });
         
         if(captured)
@@ -748,15 +715,12 @@ class EasyPZ
     
     private onRightClick(eventType: number, event: MouseEvent|TouchEvent)
     {
-        this.modes.forEach(mode =>
+        this.getActiveModes().forEach(modeData =>
         {
-            mode.ids.forEach(modeId =>
+            if(modeData.mode.onRightClick)
             {
-                if(mode.onRightClick && this.enabledModes.indexOf(modeId) !== -1)
-                {
-                    mode.onRightClick(this.getEventData(event, modeId));
-                }
-            });
+                modeData.mode.onRightClick(this.getEventData(event, modeData.activeId));
+            }
         });
     }
     
