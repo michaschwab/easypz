@@ -566,7 +566,7 @@ class EasyPZ
             
             if(eventWasUsed)
             {
-                return true;
+                event.preventDefault();
             }
         }
         else if(event.touches.length == 2)
