@@ -536,7 +536,7 @@ class EasyPZ
         }
     }
     
-    private onMouseTouchMove(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchMove(mouseEvent: MouseEvent, touchEvent?: TouchEvent) : boolean
     {
         this.mouseMoveTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
@@ -544,12 +544,13 @@ class EasyPZ
         this.updateMousePosition(event);
         
         let eventType = EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE;
-        this.onMouseTouchEvent(eventType, event);
+        let eventWasUsed = this.onMouseTouchEvent(eventType, event);
         
         for(let cb of this.afterMouseMovedCallbacks)
         {
             cb();
         }
+        return eventWasUsed;
     }
     
     private onMouseMove(event: MouseEvent)
@@ -561,7 +562,12 @@ class EasyPZ
     {
         if(event.touches.length == 1)
         {
-            this.onMouseTouchMove(null, event);
+            const eventWasUsed = this.onMouseTouchMove(null, event);
+            
+            if(eventWasUsed)
+            {
+                return true;
+            }
         }
         else if(event.touches.length == 2)
         {
@@ -633,6 +639,8 @@ class EasyPZ
     
     private onMouseTouchEvent(eventType: number, event: MouseEvent|TouchEvent)
     {
+        let eventWasUsed = false;
+        
         if(EasyPZ.isRightClick(event))
         {
             if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
@@ -641,7 +649,7 @@ class EasyPZ
             }
             return;
         }
-    
+        
         this.getActiveModes().forEach(modeData =>
         {
             if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE && modeData.mode.onMove)
@@ -650,7 +658,14 @@ class EasyPZ
                 modeData.mode.onClickTouch(this.getEventData(event, modeData.activeId));
             else if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP && modeData.mode.onClickTouchEnd)
                 modeData.mode.onClickTouchEnd(this.getEventData(event, modeData.activeId));
+            
+            eventWasUsed = true;
+            /*if(modeData.mode.active)
+            {
+                eventWasUsed = true;
+            }*/
         });
+        return eventWasUsed;
     }
     
     private onMouseUp(event: MouseEvent)
@@ -697,7 +712,7 @@ class EasyPZ
     private onWheel(event: WheelEvent)
     {
         let captured = false;
-    
+        
         this.getActiveModes().forEach(modeData =>
         {
             if(modeData.mode.onWheel)
@@ -857,7 +872,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
         ids: ['FLICK_PAN'],
-        settings: { minDistance: 3, delay: 300, friction: 0.02 },
+        settings: { minDistance: 3, delay: 300, friction: 0.005 },
         
         active: false,
         data: {
