@@ -286,25 +286,28 @@ class EasyPZ
         });
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
+            // Zoom either relative to the current transformation, or to the saved snapshot.
+            let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
+            let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomData.scaleChange;
+            
+            this.totalTransform.scale = relativeTransform.scale * scaleChange;
+            
             if(transformBeforeScale)
             {
-                let scaleChange = 1 / zoomData.scaleChange;
-                this.totalTransform.scale *= scaleChange;
-                
                 let scalePrev = this.totalTransform.scale;
                 let scaleAfter = this.totalTransform.scale * scaleChange;
                 
-                this.totalTransform.translateX = (this.totalTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
-                this.totalTransform.translateY = (this.totalTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
+                this.totalTransform.translateX = (relativeTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
+                this.totalTransform.translateY = (relativeTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
+                
+                if(zoomData.targetX || zoomData.targetY)
+                {
+                    this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / scalePrev * scaleAfter;
+                    this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / scalePrev * scaleAfter;
+                }
             }
             else
             {
-                // Zoom either relative to the current transformation, or to the saved snapshot.
-                let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
-                let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomData.scaleChange;
-                
-                this.totalTransform.scale = relativeTransform.scale * scaleChange;
-                
                 let posBefore = {x: zoomData.x , y: zoomData.y };
                 let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
                 let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
