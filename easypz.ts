@@ -105,7 +105,7 @@ class EasyPZLoader
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, modes, {}, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
         }
     }
 }
@@ -218,10 +218,20 @@ class EasyPZ
     private totalTransform = { scale: 1, translateX: 0, translateY: 0};
     private totalTransformSnapshot = { scale: 1, translateX: 0, translateY: 0};
     public el: HTMLElement;
+    private options = {
+        minScale: 0,
+        maxScale: 100,
+        bounds: { top: -50, right: 50, bottom: 50, left: -50 }
+    };
     
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 enabledModes: string[] = null,
+                options?: {
+                    minScale?: number,
+                    maxScale?: number,
+                    bounds?: { top: number, right: number, bottom: number, left: number }
+                },
                 onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onResetAbsoluteScale: () => void = () => {},
@@ -829,6 +839,7 @@ class EasyPZ
     }
 }
 
+/* Simple Pan*/
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -870,7 +881,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Flick Pan */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -945,7 +956,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Hold Zoom */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -1016,7 +1027,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Double Click Zoom */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -1061,7 +1072,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Wheel Zoom */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
@@ -1102,7 +1113,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     return mode;
 });
 
-
+/* Pinch Zoom and Pan */
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {

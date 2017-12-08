@@ -1,0 +1,30 @@
+{
+  "name": "easypz",
+  "version": "1.0.0",
+  "description": "Simple and extendable pan and zoom library for 1D and 2D content and visualizations, on mobile and desktop.",
+  "main": "easypz.js",
+  "dependencies": {
+    "uglify-js": "^3.1.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/michaschwab/easypz.git"
+  },
+  "keywords": [
+    "pan",
+    "zoom",
+    "mobile",
+    "visualization",
+    "d3"
+  ],
+  "author": "Michail Schwab",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/michaschwab/easypz/issues"
+  },
+  "homepage": "https://github.com/michaschwab/easypz#readme"
+}
