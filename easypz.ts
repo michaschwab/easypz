@@ -105,7 +105,7 @@ class EasyPZLoader
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, modes, {}, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, {}, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
         }
     }
 }
@@ -226,19 +226,19 @@ class EasyPZ
     
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
-                enabledModes?: string[],
                 options?: {
                     minScale?: number,
                     maxScale?: number,
                     bounds?: { top: number, right: number, bottom: number, left: number }
                 },
+                enabledModes?: string[],
                 onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onResetAbsoluteScale: () => void = () => {},
                 private applyTransformTo: string = '',
                 replaceVariables = false)
     {
-        if(enabledModes)
+        if(enabledModes && enabledModes.length)
         {
             this.enabledModes = enabledModes;
         }
@@ -247,6 +247,19 @@ class EasyPZ
         {
             return unresolvedMode(this);
         });
+        
+        if(options.minScale)
+        {
+            this.options.minScale = options.minScale;
+        }
+        if(options.maxScale)
+        {
+            this.options.maxScale = options.maxScale;
+        }
+        if(options.bounds)
+        {
+            this.options.bounds = options.bounds;
+        }
         
         let transformBeforeScale = !applyTransformTo;
         this.trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale);
@@ -291,6 +304,26 @@ class EasyPZ
                 this.totalTransform.translateY += panData.y / this.totalTransform.scale;
             }
             
+            if(this.options.bounds)
+            {
+                if(this.totalTransform.translateX < this.options.bounds.left)
+                {
+                    this.totalTransform.translateX = this.options.bounds.left;
+                }
+                if(this.totalTransform.translateX > this.options.bounds.right)
+                {
+                    this.totalTransform.translateX = this.options.bounds.right;
+                }
+                if(this.totalTransform.translateY < this.options.bounds.top)
+                {
+                    this.totalTransform.translateY = this.options.bounds.top;
+                }
+                if(this.totalTransform.translateY > this.options.bounds.bottom)
+                {
+                    this.totalTransform.translateY = this.options.bounds.bottom;
+                }
+            }
+            
             onPanned(panData, this.totalTransform);
             onTransform(this.totalTransform);
         });
@@ -330,6 +363,26 @@ class EasyPZ
                 {
                     this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / this.totalTransform.scale;
                     this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / this.totalTransform.scale;
+                }
+            }
+    
+            if(this.options.bounds)
+            {
+                if(this.totalTransform.translateX < this.options.bounds.left)
+                {
+                    this.totalTransform.translateX = this.options.bounds.left;
+                }
+                if(this.totalTransform.translateX > this.options.bounds.right)
+                {
+                    this.totalTransform.translateX = this.options.bounds.right;
+                }
+                if(this.totalTransform.translateY < this.options.bounds.top)
+                {
+                    this.totalTransform.translateY = this.options.bounds.top;
+                }
+                if(this.totalTransform.translateY > this.options.bounds.bottom)
+                {
+                    this.totalTransform.translateY = this.options.bounds.bottom;
                 }
             }
             
