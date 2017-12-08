@@ -221,7 +221,7 @@ class EasyPZ
     private options = {
         minScale: 0,
         maxScale: 100,
-        bounds: { top: -50, right: 50, bottom: 50, left: -50 }
+        bounds: { top: -1000000, right: 1000000, bottom: 1000000, left: -1000000 }
     };
     
     constructor(el: Node|{node: () => HTMLElement},
