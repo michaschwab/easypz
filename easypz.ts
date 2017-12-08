@@ -248,17 +248,20 @@ class EasyPZ
             return unresolvedMode(this);
         });
         
-        if(options.minScale)
+        if(options)
         {
-            this.options.minScale = options.minScale;
-        }
-        if(options.maxScale)
-        {
-            this.options.maxScale = options.maxScale;
-        }
-        if(options.bounds)
-        {
-            this.options.bounds = options.bounds;
+            if(options.minScale)
+            {
+                this.options.minScale = options.minScale;
+            }
+            if(options.maxScale)
+            {
+                this.options.maxScale = options.maxScale;
+            }
+            if(options.bounds)
+            {
+                this.options.bounds = options.bounds;
+            }
         }
         
         let transformBeforeScale = !applyTransformTo;
