@@ -5,7 +5,7 @@
     "moduleResolution": "node",
     "sourceMap": true,
     "declaration": true,
-    "outDir": "./dist",
+    /*"outDir": "./dist",*/
     /*"strict": true,*/
     "emitDecoratorMetadata": true, //for angular to be able to use metadata we specify in our components.
     "experimentalDecorators": true, //angular needs decorators like @Component, @Injectable, etc.

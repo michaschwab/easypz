@@ -1,6 +1,6 @@
 {
   "name": "easypz",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Simple and extendable pan and zoom library for 1D and 2D content and visualizations, on mobile and desktop.",
   "main": "dist/easypz.js",
   "types": "dist/easypz.d.ts",
