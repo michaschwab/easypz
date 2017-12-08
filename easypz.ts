@@ -10,7 +10,7 @@ function sign(number: number)
 class EasyPZLoader
 {
     static DEFAULT_MODES = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
-    private easyPzElements = [];
+    private easyPzElements: HTMLElement[] = [];
     
     private static getSettingsFromString(settingsString) : { onPanned: () => void, onZoomed: () => void, onTransformed: () => void, onResetAbsoluteScale: () => void, modes: string[], applyTransformTo: string, replaceVariables: boolean }
     {
@@ -82,7 +82,7 @@ class EasyPZLoader
             this.easyPzElements.push(el);
             console.log('adding EasyPZ');
             
-            let modes = [];
+            let modes: string[] = [];
             let onPanned = function() {};
             let onZoomed = function() {};
             let onTransformed = function() {};
@@ -117,7 +117,7 @@ window.setInterval(function() { easyPZLoader.checkElements(); }, 2000);
 class EzEventEmitter<T>
 {
     subscribers : ((value: T) => void)[] = [];
-    public emit(value?: T)
+    public emit(value: T)
     {
         this.subscribers.forEach(subscriber =>
         {
@@ -226,7 +226,7 @@ class EasyPZ
     
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
-                enabledModes: string[] = null,
+                enabledModes?: string[],
                 options?: {
                     minScale?: number,
                     maxScale?: number,
@@ -297,8 +297,9 @@ class EasyPZ
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
             // Zoom either relative to the current transformation, or to the saved snapshot.
+            const zoomDataScaleChange = zoomData.scaleChange ? zoomData.scaleChange : 1;
             let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
-            let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomData.scaleChange;
+            let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomDataScaleChange;
             
             this.totalTransform.scale = relativeTransform.scale * scaleChange;
             
@@ -310,7 +311,7 @@ class EasyPZ
                 this.totalTransform.translateX = (relativeTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
                 this.totalTransform.translateY = (relativeTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
                 
-                if(zoomData.targetX || zoomData.targetY)
+                if(zoomData.targetX && zoomData.targetY)
                 {
                     this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / scalePrev * scaleAfter;
                     this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / scalePrev * scaleAfter;
@@ -325,7 +326,7 @@ class EasyPZ
                 this.totalTransform.translateX = relativeTransform.translateX - relative.x / this.totalTransform.scale;
                 this.totalTransform.translateY = relativeTransform.translateY - relative.y / this.totalTransform.scale;
                 
-                if(zoomData.targetX || zoomData.targetY)
+                if(zoomData.targetX && zoomData.targetY)
                 {
                     this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / this.totalTransform.scale;
                     this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / this.totalTransform.scale;
@@ -348,7 +349,7 @@ class EasyPZ
             for(let i = 0; i < els.length; i++)
             {
                 const element = els[i];
-                let transform = element.getAttribute('transform');
+                const transform = element.getAttribute('transform') || '';
                 let transformData = EasyPZ.parseTransform(transform);
                 
                 let translateX = this.totalTransform.translateX;
@@ -373,7 +374,7 @@ class EasyPZ
         }
     }
     
-    private templateVariableElements = [];
+    private templateVariableElements: Element[] = [];
     private static TEMPLATE_VARIABLES = { 'translateX': '__EASYPZ-TRANSLATE-X__', 'translateY': '__EASYPZ-TRANSLATE-Y__', 'scale': '__EASYPZ-SCALE__'};
     
     
@@ -468,7 +469,7 @@ class EasyPZ
         }
     }
     
-    private getMousePosition(event: MouseEvent|TouchEvent) : {x: number, y: number}
+    private getMousePosition(event: MouseEvent|TouchEvent) : {x: number, y: number}|null
     {
         let pos = {x: 0, y: 0};
         
@@ -483,7 +484,7 @@ class EasyPZ
         {
             const touches = event['touches'] ? event['touches'] : [];
             this.numberOfPointers = touches.length;
-            if(touches.length < 1) return;
+            if(touches.length < 1) return null;
             pos = {x: touches[0].clientX, y: touches[0].clientY};
         }
         
@@ -498,12 +499,17 @@ class EasyPZ
         return { x: x - boundingRect.left, y: y - boundingRect.top };
     }
     
-    private onMouseTouchDown(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchDown(mouseEvent: MouseEvent|null, touchEvent?: TouchEvent)
     {
         this.lastMouseDownTime = this.mouseDownTime;
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
         this.mouseDownTime = Date.now();
         let event = mouseEvent || touchEvent;
+        
+        if(!event)
+        {
+            return console.error('no event!');
+        }
         
         this.updateMousePosition(event);
         
@@ -549,11 +555,17 @@ class EasyPZ
         }
     }
     
-    private onMouseTouchMove(mouseEvent: MouseEvent, touchEvent?: TouchEvent) : boolean
+    private onMouseTouchMove(mouseEvent: MouseEvent|null, touchEvent?: TouchEvent) : boolean
     {
         this.mouseMoveTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
         let event = mouseEvent || touchEvent;
+        
+        if(!event)
+        {
+            console.error('no event');
+            return false;
+        }
         this.updateMousePosition(event);
         
         let eventType = EasyPZ.MOUSE_EVENT_TYPES.MOUSE_MOVE;
@@ -638,11 +650,16 @@ class EasyPZ
         });
     }
     
-    private onMouseTouchUp(mouseEvent: MouseEvent, touchEvent?: TouchEvent)
+    private onMouseTouchUp(mouseEvent: MouseEvent|null, touchEvent?: TouchEvent)
     {
         this.mouseUpTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
         let event = mouseEvent || touchEvent;
+        
+        if(!event)
+        {
+            return console.error('no event');
+        }
         
         this.updateMousePosition(event);
         
@@ -658,9 +675,10 @@ class EasyPZ
         {
             if(eventType === EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN)
             {
+                //TODO should check if it uses the event.
                 this.onRightClick(eventType, event);
             }
-            return;
+            return eventWasUsed;
         }
         
         this.getActiveModes().forEach(modeData =>
@@ -698,7 +716,7 @@ class EasyPZ
         
         let pos = this.getMousePosition(event);
         
-        if(pos.x < 0 || pos.x > this.width || pos.y < 0 || pos.y > this.height)
+        if(pos && (pos.x < 0 || pos.x > this.width || pos.y < 0 || pos.y > this.height))
         {
             this.onMouseTouchUp(event);
         }
@@ -794,7 +812,10 @@ class EasyPZ
     
     static isRightClick(event: MouseEvent|TouchEvent): boolean
     {
-        return event instanceof MouseEvent && (event.clientX) && (("which" in event && event.which === 3) || ("button" in event && event.button === 2));
+        return event instanceof MouseEvent
+            && (!!event.clientX)
+            && (("which" in event && event.which === 3)
+                || ("button" in event && event.button === 2));
     }
     
     static getPositionDistance(pos1: {x: number, y: number}, pos2: {x: number, y: number})
@@ -1142,7 +1163,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             {
                 mode.data.posStart1 = easypz.getRelativePosition(eventData.event.touches[0].clientX, eventData.event.touches[0].clientY);
                 mode.data.posStart2 = easypz.getRelativePosition(eventData.event.touches[1].clientX, eventData.event.touches[1].clientY);
-                easypz.resetAbsoluteScale.emit();
+                easypz.resetAbsoluteScale.emit(null);
             }
         },
         
@@ -1395,7 +1416,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             mode.data.startPos = {x: easypz.mousePos.x, y: easypz.mousePos.y};
             mode.data.relativePos = {x: 0, y: 0};
             
-            easypz.resetAbsoluteScale.emit();
+            easypz.resetAbsoluteScale.emit(null);
             
             easypz.callbackAfterTimeoutOrMovement(mode.settings.delay, mode.settings.minDistance).then((dist) =>
             {
