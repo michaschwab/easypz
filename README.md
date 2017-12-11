@@ -14,16 +14,15 @@ and assign an `easypz` attribute to the visualization you want to make zoomable,
     
     </svg>
 
-If you want to set specific settings, it can be done the following way:
+If you want to set specific settings, e.g. set the pan and zoom interaction modes, it can be done the following way:
 
     <svg easypz='
     {
-       "onPanned": "onPanned",
-       "onZoomed": "onZoomed",
-       "onResetAbsoluteScale": "onResetAbsoluteScale",
        "modes": ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"]
     }' width="960" height="600">
     
     </svg>
 
-Then, as minimum, implement the functions `onZoomed` and `onPanned`.
+Then, as minimum, implement the function `onTransformed(scale, translateX, translateY)` in your JavaScript code.
+
+Many more examples can be found at [easypz.io](https://easypz.io), including examples using [d3](https://d3js.org/).
