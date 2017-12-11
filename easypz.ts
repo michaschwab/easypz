@@ -219,9 +219,9 @@ class EasyPZ
     private totalTransformSnapshot = { scale: 1, translateX: 0, translateY: 0};
     public el: HTMLElement;
     private options = {
-        minScale: 0,
-        maxScale: 100,
-        bounds: { top: -1000000, right: 1000000, bottom: 1000000, left: -1000000 }
+        minScale: 0.8,
+        maxScale: 8,
+        bounds: { top: -50, right: 50, bottom: 50, left: -50 }
     };
     
     constructor(el: Node|{node: () => HTMLElement},
@@ -306,26 +306,8 @@ class EasyPZ
                 this.totalTransform.translateX += panData.x / this.totalTransform.scale;
                 this.totalTransform.translateY += panData.y / this.totalTransform.scale;
             }
-            
-            if(this.options.bounds)
-            {
-                if(this.totalTransform.translateX < this.options.bounds.left)
-                {
-                    this.totalTransform.translateX = this.options.bounds.left;
-                }
-                if(this.totalTransform.translateX > this.options.bounds.right)
-                {
-                    this.totalTransform.translateX = this.options.bounds.right;
-                }
-                if(this.totalTransform.translateY < this.options.bounds.top)
-                {
-                    this.totalTransform.translateY = this.options.bounds.top;
-                }
-                if(this.totalTransform.translateY > this.options.bounds.bottom)
-                {
-                    this.totalTransform.translateY = this.options.bounds.bottom;
-                }
-            }
+    
+            this.ensureTransformWithinBounds(transformBeforeScale);
             
             onPanned(panData, this.totalTransform);
             onTransform(this.totalTransform);
@@ -336,13 +318,15 @@ class EasyPZ
             const zoomDataScaleChange = zoomData.scaleChange ? zoomData.scaleChange : 1;
             let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
             let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomDataScaleChange;
+            let scalePrev = this.totalTransform.scale;
             
-            this.totalTransform.scale = relativeTransform.scale * scaleChange;
+            //this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
             
             if(transformBeforeScale)
             {
-                let scalePrev = this.totalTransform.scale;
-                let scaleAfter = this.totalTransform.scale * scaleChange;
+                let scaleAfter = this.getScaleWithinLimits(this.totalTransform.scale * scaleChange);
+                this.totalTransform.scale = scaleAfter;
+                //let scaleAfter = this.totalTransform.scale * scaleChange;
                 
                 this.totalTransform.translateX = (relativeTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
                 this.totalTransform.translateY = (relativeTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
@@ -355,6 +339,9 @@ class EasyPZ
             }
             else
             {
+                this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
+                scaleChange = this.totalTransform.scale / scalePrev;
+                
                 let posBefore = {x: zoomData.x , y: zoomData.y };
                 let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
                 let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
@@ -369,29 +356,50 @@ class EasyPZ
                 }
             }
     
-            if(this.options.bounds)
-            {
-                if(this.totalTransform.translateX < this.options.bounds.left)
-                {
-                    this.totalTransform.translateX = this.options.bounds.left;
-                }
-                if(this.totalTransform.translateX > this.options.bounds.right)
-                {
-                    this.totalTransform.translateX = this.options.bounds.right;
-                }
-                if(this.totalTransform.translateY < this.options.bounds.top)
-                {
-                    this.totalTransform.translateY = this.options.bounds.top;
-                }
-                if(this.totalTransform.translateY > this.options.bounds.bottom)
-                {
-                    this.totalTransform.translateY = this.options.bounds.bottom;
-                }
-            }
+            this.ensureTransformWithinBounds(transformBeforeScale);
             
             onZoomed(zoomData, this.totalTransform);
             onTransform(this.totalTransform);
         });
+    }
+    
+    private getScaleWithinLimits(scale: number) : number
+    {
+        if(!isNaN(this.options.minScale))
+        {
+            scale = scale > this.options.minScale ? scale : this.options.minScale;
+        }
+    
+        if(!isNaN(this.options.maxScale))
+        {
+            scale = scale < this.options.maxScale ? scale : this.options.maxScale;
+        }
+        return scale;
+    }
+    
+    private ensureTransformWithinBounds(transformBeforeScale)
+    {
+        if(this.options.bounds)
+        {
+            let scale = transformBeforeScale ? this.totalTransform.scale - 1 : 1 - 1 / this.totalTransform.scale;
+            
+            if(this.totalTransform.translateX < -1 * scale * this.width + this.options.bounds.left)
+            {
+                this.totalTransform.translateX = -1 * scale * this.width + this.options.bounds.left;
+            }
+            if(this.totalTransform.translateX > this.options.bounds.right)
+            {
+                this.totalTransform.translateX = this.options.bounds.right;
+            }
+            if(this.totalTransform.translateY < -1 * scale * this.height + this.options.bounds.top)
+            {
+                this.totalTransform.translateY = -1 * scale * this.height + this.options.bounds.top;
+            }
+            if(this.totalTransform.translateY > this.options.bounds.bottom)
+            {
+                this.totalTransform.translateY = this.options.bounds.bottom;
+            }
+        }
     }
     
     private lastAppliedTransform = { translateX: 0, translateY: 0 };
