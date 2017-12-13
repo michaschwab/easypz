@@ -12,13 +12,28 @@ class EasyPZLoader
     static DEFAULT_MODES = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
     private easyPzElements: HTMLElement[] = [];
     
-    private static getSettingsFromString(settingsString) : { onPanned: () => void, onZoomed: () => void, onTransformed: () => void, onResetAbsoluteScale: () => void, modes: string[], applyTransformTo: string, replaceVariables: boolean }
+    private static getSettingsFromString(settingsString) :
+    {
+        options: {
+            minScale?: number,
+            maxScale?: number,
+            bounds?: { top: number, right: number, bottom: number, left: number }
+        },
+        onPanned: () => void,
+        onZoomed: () => void,
+        onTransformed: () => void,
+        onResetAbsoluteScale: () => void,
+        modes: string[],
+        applyTransformTo: string,
+        replaceVariables: boolean
+    }
     {
         let settings = {
             onPanned: () => {},
             onZoomed: () => {},
             onTransformed: () => {},
             onResetAbsoluteScale: () => {},
+            options: {},
             modes: EasyPZLoader.DEFAULT_MODES,
             applyTransformTo: '',
             replaceVariables: false
@@ -46,7 +61,7 @@ class EasyPZLoader
             console.log(e);
         }
         
-        const possibleOverrides = ['modes', 'onPanned', 'onZoomed', 'onTransformed', 'onResetAbsoluteScale', 'applyTransformTo'];
+        const possibleOverrides = ['options', 'modes', 'onPanned', 'onZoomed', 'onTransformed', 'onResetAbsoluteScale', 'applyTransformTo'];
         
         for(let possibleOverride of possibleOverrides)
         {
@@ -87,6 +102,7 @@ class EasyPZLoader
             let onZoomed = function() {};
             let onTransformed = function() {};
             let onResetAbsoluteScale = function() {};
+            let options = {};
             let applyTransformTo = '';
             let replaceVariables = false;
             
@@ -100,12 +116,13 @@ class EasyPZLoader
                 onResetAbsoluteScale = settingsObj.onResetAbsoluteScale;
                 applyTransformTo = settingsObj.applyTransformTo;
                 replaceVariables = settingsObj.replaceVariables;
+                options = settingsObj.options;
             }
             catch(e)
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, {}, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, options, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
         }
     }
 }
@@ -220,7 +237,7 @@ class EasyPZ
     public el: HTMLElement;
     private options = {
         minScale: 0.8,
-        maxScale: 8,
+        maxScale: 10,
         bounds: { top: -50, right: 50, bottom: 50, left: -50 }
     };
     
@@ -250,15 +267,15 @@ class EasyPZ
         
         if(options)
         {
-            if(options.minScale)
+            if(typeof options.minScale !== 'undefined')
             {
                 this.options.minScale = options.minScale;
             }
-            if(options.maxScale)
+            if(typeof options.maxScale !== 'undefined')
             {
                 this.options.maxScale = options.maxScale;
             }
-            if(options.bounds)
+            if(typeof options.bounds !== 'undefined')
             {
                 this.options.bounds = options.bounds;
             }
@@ -312,6 +329,7 @@ class EasyPZ
             onPanned(panData, this.totalTransform);
             onTransform(this.totalTransform);
         });
+        
         this.onZoomed.subscribe((zoomData: EasyPzZoomData) =>
         {
             // Zoom either relative to the current transformation, or to the saved snapshot.
@@ -365,12 +383,12 @@ class EasyPZ
     
     private getScaleWithinLimits(scale: number) : number
     {
-        if(!isNaN(this.options.minScale))
+        if(!isNaN(this.options.minScale) && this.options.minScale !== null)
         {
             scale = scale > this.options.minScale ? scale : this.options.minScale;
         }
     
-        if(!isNaN(this.options.maxScale))
+        if(!isNaN(this.options.maxScale) && this.options.maxScale !== null)
         {
             scale = scale < this.options.maxScale ? scale : this.options.maxScale;
         }
@@ -438,13 +456,12 @@ class EasyPZ
         }
     }
     
-    private templateVariableElements: Element[] = [];
-    private static TEMPLATE_VARIABLES = { 'translateX': '__EASYPZ-TRANSLATE-X__', 'translateY': '__EASYPZ-TRANSLATE-Y__', 'scale': '__EASYPZ-SCALE__'};
-    
+    //private templateVariableElements: Element[] = [];
+    //private static TEMPLATE_VARIABLES = { 'translateX': '__EASYPZ-TRANSLATE-X__', 'translateY': '__EASYPZ-TRANSLATE-Y__', 'scale': '__EASYPZ-SCALE__'};
     
     private detectTemplateVariables()
     {
-        const templateVariableNames = Object.keys(EasyPZ.TEMPLATE_VARIABLES).map(key => EasyPZ.TEMPLATE_VARIABLES[key]);
+        /*const templateVariableNames = Object.keys(EasyPZ.TEMPLATE_VARIABLES).map(key => EasyPZ.TEMPLATE_VARIABLES[key]);
         const allEls = this.el.getElementsByTagName('*');
         
         for(let i = 0; i < allEls.length; i++)
@@ -465,12 +482,12 @@ class EasyPZ
                     }
                 }
             }
-        }
+        }*/
     }
     
     private replaceVariables()
     {
-        const TEMPLATE_VARIABLES = Object.keys(EasyPZ.TEMPLATE_VARIABLES);
+        /*const TEMPLATE_VARIABLES = Object.keys(EasyPZ.TEMPLATE_VARIABLES);
         
         this.templateVariableElements.forEach(el =>
         {
@@ -492,7 +509,7 @@ class EasyPZ
                     el.setAttribute(attrName, attrValue);
                 }
             }
-        });
+        });*/
     }
     
     private static parseTransform(transform: string)
@@ -518,6 +535,11 @@ class EasyPZ
     }
     
     private ngAfterViewInit()
+    {
+        this.setDimensions();
+    }
+    
+    private setDimensions()
     {
         let rect = this.el.getBoundingClientRect();
         this.width = rect.width;
