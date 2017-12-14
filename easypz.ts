@@ -336,7 +336,7 @@ class EasyPZ
             const zoomDataScaleChange = zoomData.scaleChange ? zoomData.scaleChange : 1;
             let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
             let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomDataScaleChange;
-            let scalePrev = this.totalTransform.scale;
+            let scalePrev = zoomData.absoluteScaleChange ? this.totalTransformSnapshot.scale : this.totalTransform.scale;
             
             //this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
             
