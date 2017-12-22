@@ -342,7 +342,7 @@ class EasyPZ
             
             if(transformBeforeScale)
             {
-                let scaleAfter = this.getScaleWithinLimits(this.totalTransform.scale * scaleChange);
+                let scaleAfter = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
                 this.totalTransform.scale = scaleAfter;
                 //let scaleAfter = this.totalTransform.scale * scaleChange;
                 
