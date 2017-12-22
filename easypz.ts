@@ -337,29 +337,23 @@ class EasyPZ
             let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
             let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomDataScaleChange;
             let scalePrev = zoomData.absoluteScaleChange ? this.totalTransformSnapshot.scale : this.totalTransform.scale;
-            
-            //this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
+    
+            this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
+            scaleChange = this.totalTransform.scale / scalePrev;
             
             if(transformBeforeScale)
             {
-                let scaleAfter = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
-                this.totalTransform.scale = scaleAfter;
-                //let scaleAfter = this.totalTransform.scale * scaleChange;
-                
-                this.totalTransform.translateX = (relativeTransform.translateX - zoomData.x) / scalePrev * scaleAfter + zoomData.x;
-                this.totalTransform.translateY = (relativeTransform.translateY - zoomData.y) / scalePrev * scaleAfter + zoomData.y;
+                this.totalTransform.translateX = (relativeTransform.translateX - zoomData.x) / scalePrev * this.totalTransform.scale + zoomData.x;
+                this.totalTransform.translateY = (relativeTransform.translateY - zoomData.y) / scalePrev * this.totalTransform.scale + zoomData.y;
                 
                 if(zoomData.targetX && zoomData.targetY)
                 {
-                    this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / scalePrev * scaleAfter;
-                    this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / scalePrev * scaleAfter;
+                    this.totalTransform.translateX += (zoomData.targetX - zoomData.x) / scalePrev * this.totalTransform.scale;
+                    this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / scalePrev * this.totalTransform.scale;
                 }
             }
             else
             {
-                this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
-                scaleChange = this.totalTransform.scale / scalePrev;
-                
                 let posBefore = {x: zoomData.x , y: zoomData.y };
                 let posAfter = {x: posBefore.x * scaleChange, y: posBefore.y * scaleChange};
                 let relative = {x: posAfter.x - posBefore.x, y: posAfter.y - posBefore.y};
