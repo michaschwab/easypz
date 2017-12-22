@@ -394,22 +394,24 @@ class EasyPZ
         if(this.options.bounds)
         {
             let scale = transformBeforeScale ? this.totalTransform.scale - 1 : 1 - 1 / this.totalTransform.scale;
+            let scaleTopLeft = -1 * Math.max(scale, 0);
+            let scaleBotRight = -1 * Math.min(scale, 0);
             
-            if(this.totalTransform.translateX < -1 * scale * this.width + this.options.bounds.left)
+            if(this.totalTransform.translateX < scaleTopLeft * this.width + this.options.bounds.left)
             {
-                this.totalTransform.translateX = -1 * scale * this.width + this.options.bounds.left;
+                this.totalTransform.translateX = scaleTopLeft * this.width + this.options.bounds.left;
             }
-            if(this.totalTransform.translateX > this.options.bounds.right)
+            if(this.totalTransform.translateX > scaleBotRight * this.width + this.options.bounds.right)
             {
-                this.totalTransform.translateX = this.options.bounds.right;
+                this.totalTransform.translateX = scaleBotRight * this.width + this.options.bounds.right;
             }
-            if(this.totalTransform.translateY < -1 * scale * this.height + this.options.bounds.top)
+            if(this.totalTransform.translateY < scaleTopLeft * this.height + this.options.bounds.top)
             {
-                this.totalTransform.translateY = -1 * scale * this.height + this.options.bounds.top;
+                this.totalTransform.translateY = scaleTopLeft * this.height + this.options.bounds.top;
             }
-            if(this.totalTransform.translateY > this.options.bounds.bottom)
+            if(this.totalTransform.translateY > scaleBotRight * this.height + this.options.bounds.bottom)
             {
-                this.totalTransform.translateY = this.options.bounds.bottom;
+                this.totalTransform.translateY = scaleBotRight * this.height + this.options.bounds.bottom;
             }
         }
     }
