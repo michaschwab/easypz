@@ -25,7 +25,8 @@ class EasyPZLoader
         onResetAbsoluteScale: () => void,
         modes: string[],
         applyTransformTo: string,
-        replaceVariables: boolean
+        replaceVariables: boolean,
+        modeSettings: {[modeName: string]: {[settingName: string]: any}}
     }
     {
         let settings = {
@@ -36,7 +37,8 @@ class EasyPZLoader
             options: {},
             modes: EasyPZLoader.DEFAULT_MODES,
             applyTransformTo: '',
-            replaceVariables: false
+            replaceVariables: false,
+            modeSettings: {}
         };
         if(!!window['onPanned'])
             settings.onPanned = window['onPanned'];
@@ -61,7 +63,8 @@ class EasyPZLoader
             console.log(e);
         }
         
-        const possibleOverrides = ['options', 'modes', 'onPanned', 'onZoomed', 'onTransformed', 'onResetAbsoluteScale', 'applyTransformTo'];
+        const possibleOverrides = ['options', 'modes', 'onPanned', 'onZoomed', 'onTransformed',
+            'onResetAbsoluteScale', 'applyTransformTo', 'modeSettings'];
         
         for(let possibleOverride of possibleOverrides)
         {
@@ -105,6 +108,7 @@ class EasyPZLoader
             let options = {};
             let applyTransformTo = '';
             let replaceVariables = false;
+            let modeSettings = {};
             
             try {
                 let settingsObj = EasyPZLoader.getSettingsFromString(settingsString);
@@ -117,12 +121,13 @@ class EasyPZLoader
                 applyTransformTo = settingsObj.applyTransformTo;
                 replaceVariables = settingsObj.replaceVariables;
                 options = settingsObj.options;
+                modeSettings = settingsObj.modeSettings;
             }
             catch(e)
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, options, modes, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
         }
     }
 }
@@ -249,6 +254,7 @@ class EasyPZ
                     bounds?: { top: number, right: number, bottom: number, left: number }
                 },
                 enabledModes?: string[],
+                modeSettings: {[modeName: string]: {[settingName: string]: any}} = {},
                 onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onResetAbsoluteScale: () => void = () => {},
@@ -264,6 +270,7 @@ class EasyPZ
         {
             return unresolvedMode(this);
         });
+        this.applyModeSettings(modeSettings);
         
         if(options)
         {
@@ -850,6 +857,41 @@ class EasyPZ
                 modeData.mode.onRightClick(this.getEventData(event, modeData.activeId));
             }
         });
+    }
+
+    private applyModeSettings(modeSettings: {[modeName: string]: {[settingName: string]: any}} = {})
+    {
+        const modeNames = Object.keys(modeSettings);
+
+        if(modeNames && modeNames.length)
+        {
+            for(const modeName of modeNames)
+            {
+                const modes = this.modes.filter(m => m.ids.indexOf(modeName) !== -1);
+
+                if (modes.length !== 1)
+                {
+                    console.error('Trying to set a setting for an easypz mode that does not exist', modeName);
+                }
+                else
+                {
+                    const mode = modes[0];
+                    const newSettings = modeSettings[modeName];
+
+                    for(const settingName in newSettings)
+                    {
+                        if(!mode.settings[settingName])
+                        {
+                            console.error('Trying to set a setting for the easypz mode ', modeName, ', but this setting does not exist: ', settingName);
+                        }
+                        else
+                        {
+                            mode.settings[settingName] = newSettings[settingName];
+                        }
+                    }
+                }
+            }
+        }
     }
     
     public static momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
