@@ -241,8 +241,8 @@ class EasyPZ
     private totalTransformSnapshot = { scale: 1, translateX: 0, translateY: 0};
     public el: HTMLElement;
     private options = {
-        minScale: 0.8,
-        maxScale: 10,
+        minScale: 0.25,
+        maxScale: 12,
         bounds: { top: -150, right: 150, bottom: 150, left: -150 }
     };
     
