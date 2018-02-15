@@ -422,40 +422,52 @@ class EasyPZ
             }
         }
     }
-    
-    private lastAppliedTransform = { translateX: 0, translateY: 0 };
-    
+
+    private lastAppliedTransform = { translateX: 0, translateY: 0, scale: 1 };
+
     private applyTransformation()
     {
         if(this.applyTransformTo)
         {
             let els = this.el.querySelectorAll(this.applyTransformTo);
-            
+
             for(let i = 0; i < els.length; i++)
             {
                 const element = els[i];
                 const transform = element.getAttribute('transform') || '';
                 let transformData = EasyPZ.parseTransform(transform);
-                
+
                 let translateX = this.totalTransform.translateX;
                 let translateY = this.totalTransform.translateY;
-                
+                let scale = this.totalTransform.scale;
+
                 if(transformData)
                 {
-                    translateX += transformData.translateX - this.lastAppliedTransform.translateX;
-                    translateY += transformData.translateY - this.lastAppliedTransform.translateY;
+                    const originalScale = transformData.scale / this.lastAppliedTransform.scale;
+                    const originalTranslate = { x: 0, y: 0 };
+                    const translateBeforeScaleFactor = transformData.translateBeforeScale ? 1 : originalScale;
+
+                    originalTranslate.x = (transformData.translateX - this.lastAppliedTransform.translateX / originalScale) * translateBeforeScaleFactor;
+                    originalTranslate.y = (transformData.translateY - this.lastAppliedTransform.translateY / originalScale) * translateBeforeScaleFactor;
+                    // console.log(originalTranslate.x, transformData.translateX , this.lastAppliedTransform.translateX, originalScale, this.lastAppliedTransform.scale, this.lastAppliedTransform.lastScale, transformData.translateBeforeScale);
+
+                    scale *= originalScale;
+
+                    translateX = translateX / originalScale + originalTranslate.x / originalScale;
+                    translateY = translateY / originalScale + originalTranslate.y / originalScale;
                 }
                 else
                 {
                     console.log('what is wrong', transform);
                 }
-                
+
                 //element.setAttribute('transform', 'translate(' + translateX + ',' + translateY + ')' + 'scale(' + this.totalTransform.scale + ')');
-                element.setAttribute('transform', 'scale(' + this.totalTransform.scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
+                element.setAttribute('transform', 'scale(' + scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
             }
-            
+
             this.lastAppliedTransform.translateX = this.totalTransform.translateX;
             this.lastAppliedTransform.translateY = this.totalTransform.translateY;
+            this.lastAppliedTransform.scale = this.totalTransform.scale;
         }
     }
     
@@ -514,27 +526,45 @@ class EasyPZ
             }
         });*/
     }
-    
-    private static parseTransform(transform: string)
+
+    private static parseTransform(transform: string) : { translateX: number, translateY: number, scale: number, translateBeforeScale: boolean}
     {
-        if(!transform)
+        const transformObject = { translateX: 0, translateY: 0, scale: 1, translateBeforeScale: false };
+
+        if(transform)
         {
-            return { translateX: 0, translateY: 0 };
+            transform = transform.replace(/ /g,'');
+
+            //var translate  = /translate\((\d+),(\d+)\)/.exec(transform);
+            const translate  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)/.exec(transform);
+            if(translate)
+            {
+                transformObject.translateX = parseFloat(translate[1]);
+                transformObject.translateY = parseFloat(translate[2]);
+            }
+            else
+            {
+                console.error('no translate found', transform);
+            }
+
+            const scale  = /\s*scale\(([-0-9.]+)\)/.exec(transform);
+            if(scale)
+            {
+                transformObject.scale = parseFloat(scale[1]);
+            }
+            else
+            {
+                console.error('no scale found', transform);
+            }
+
+            const translateScale  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)scale\(([-0-9.]+)\)/.exec(transform);
+            if(translateScale)
+            {
+                transformObject.translateBeforeScale = true;
+            }
         }
-        
-        transform = transform.replace(/ /g,'');
-        
-        //var translate  = /translate\((\d+),(\d+)\)/.exec(transform);
-        const translate  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)/.exec(transform);
-        if(translate)
-        {
-            return { translateX: parseFloat(translate[1]), translateY: parseFloat(translate[2]) };
-        }
-        else
-        {
-            console.error(transform);
-            return { translateX: 0, translateY: 0 };
-        }
+
+        return transformObject;
     }
     
     private ngAfterViewInit()
