@@ -132,10 +132,7 @@ class EasyPZLoader
     }
 }
 
-const easyPZLoader = new EasyPZLoader();
-easyPZLoader.checkElements();
-window.addEventListener('load', function() { easyPZLoader.checkElements(); });
-window.setInterval(function() { easyPZLoader.checkElements(); }, 2000);
+
 
 class EzEventEmitter<T>
 {
@@ -1733,3 +1730,9 @@ EasyPZ.addMode((easypz: EasyPZ) =>
     
     return mode;
 });
+
+
+const easyPZLoader = new EasyPZLoader();
+easyPZLoader.checkElements();
+window.addEventListener('load', function() { easyPZLoader.checkElements(); });
+window.setInterval(function() { easyPZLoader.checkElements(); }, 2000);
