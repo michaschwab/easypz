@@ -328,7 +328,7 @@ class EasyPZ
                 this.totalTransform.translateX += panData.x / this.totalTransform.scale;
                 this.totalTransform.translateY += panData.y / this.totalTransform.scale;
             }
-    
+            
             this.ensureTransformWithinBounds(transformBeforeScale);
             
             onPanned(panData, this.totalTransform);
@@ -342,7 +342,7 @@ class EasyPZ
             let relativeTransform = zoomData.absoluteScaleChange ? this.totalTransformSnapshot : this.totalTransform;
             let scaleChange = zoomData.absoluteScaleChange ? 1 / zoomData.absoluteScaleChange : 1 / zoomDataScaleChange;
             let scalePrev = zoomData.absoluteScaleChange ? this.totalTransformSnapshot.scale : this.totalTransform.scale;
-    
+            
             this.totalTransform.scale = this.getScaleWithinLimits(relativeTransform.scale * scaleChange);
             scaleChange = this.totalTransform.scale / scalePrev;
             
@@ -372,7 +372,7 @@ class EasyPZ
                     this.totalTransform.translateY += (zoomData.targetY - zoomData.y) / this.totalTransform.scale;
                 }
             }
-    
+            
             this.ensureTransformWithinBounds(transformBeforeScale);
             
             onZoomed(zoomData, this.totalTransform);
@@ -386,7 +386,7 @@ class EasyPZ
         {
             scale = scale > this.options.minScale ? scale : this.options.minScale;
         }
-    
+        
         if(!isNaN(this.options.maxScale) && this.options.maxScale !== null)
         {
             scale = scale < this.options.maxScale ? scale : this.options.maxScale;
@@ -420,37 +420,37 @@ class EasyPZ
             }
         }
     }
-
+    
     private lastAppliedTransform = { translateX: 0, translateY: 0, scale: 1 };
-
+    
     private applyTransformation()
     {
         if(this.applyTransformTo)
         {
             let els = this.el.querySelectorAll(this.applyTransformTo);
-
+            
             for(let i = 0; i < els.length; i++)
             {
                 const element = els[i];
                 const transform = element.getAttribute('transform') || '';
                 let transformData = EasyPZ.parseTransform(transform);
-
+                
                 let translateX = this.totalTransform.translateX;
                 let translateY = this.totalTransform.translateY;
                 let scale = this.totalTransform.scale;
-
+                
                 if(transformData)
                 {
                     const originalScale = transformData.scale / this.lastAppliedTransform.scale;
                     const originalTranslate = { x: 0, y: 0 };
                     const translateBeforeScaleFactor = transformData.translateBeforeScale ? 1 : originalScale;
-
+                    
                     originalTranslate.x = (transformData.translateX - this.lastAppliedTransform.translateX / originalScale) * translateBeforeScaleFactor;
                     originalTranslate.y = (transformData.translateY - this.lastAppliedTransform.translateY / originalScale) * translateBeforeScaleFactor;
                     // console.log(originalTranslate.x, transformData.translateX , this.lastAppliedTransform.translateX, originalScale, this.lastAppliedTransform.scale, this.lastAppliedTransform.lastScale, transformData.translateBeforeScale);
-
+                    
                     scale *= originalScale;
-
+                    
                     translateX = translateX / originalScale + originalTranslate.x / originalScale;
                     translateY = translateY / originalScale + originalTranslate.y / originalScale;
                 }
@@ -458,11 +458,11 @@ class EasyPZ
                 {
                     console.log('what is wrong', transform);
                 }
-
+                
                 //element.setAttribute('transform', 'translate(' + translateX + ',' + translateY + ')' + 'scale(' + this.totalTransform.scale + ')');
                 element.setAttribute('transform', 'scale(' + scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
             }
-
+            
             this.lastAppliedTransform.translateX = this.totalTransform.translateX;
             this.lastAppliedTransform.translateY = this.totalTransform.translateY;
             this.lastAppliedTransform.scale = this.totalTransform.scale;
@@ -524,15 +524,15 @@ class EasyPZ
             }
         });*/
     }
-
+    
     private static parseTransform(transform: string) : { translateX: number, translateY: number, scale: number, translateBeforeScale: boolean}
     {
         const transformObject = { translateX: 0, translateY: 0, scale: 1, translateBeforeScale: false };
-
+        
         if(transform)
         {
             transform = transform.replace(/ /g,'');
-
+            
             //var translate  = /translate\((\d+),(\d+)\)/.exec(transform);
             const translate  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)/.exec(transform);
             if(translate)
@@ -544,7 +544,7 @@ class EasyPZ
             {
                 console.error('no translate found', transform);
             }
-
+            
             const scale  = /\s*scale\(([-0-9.]+)\)/.exec(transform);
             if(scale)
             {
@@ -554,14 +554,14 @@ class EasyPZ
             {
                 console.error('no scale found', transform);
             }
-
+            
             const translateScale  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)scale\(([-0-9.]+)\)/.exec(transform);
             if(translateScale)
             {
                 transformObject.translateBeforeScale = true;
             }
         }
-
+        
         return transformObject;
     }
     
@@ -886,17 +886,17 @@ class EasyPZ
             }
         });
     }
-
+    
     private applyModeSettings(modeSettings: {[modeName: string]: {[settingName: string]: any}} = {})
     {
         const modeNames = Object.keys(modeSettings);
-
+        
         if(modeNames && modeNames.length)
         {
             for(const modeName of modeNames)
             {
                 const modes = this.modes.filter(m => m.ids.indexOf(modeName) !== -1);
-
+                
                 if (modes.length !== 1)
                 {
                     console.error('Trying to set a setting for an easypz mode that does not exist', modeName);
@@ -905,7 +905,7 @@ class EasyPZ
                 {
                     const mode = modes[0];
                     const newSettings = modeSettings[modeName];
-
+                    
                     for(const settingName in newSettings)
                     {
                         if(!mode.settings[settingName])
