@@ -922,22 +922,33 @@ class EasyPZ
         }
     }
     
-    public static momentumInteraction(startSpeed : number, friction : number, onStep : (dist) => void)
+    public static easeInteraction(maxSpeed : number, duration : number, onStep : (dist) => void)
+    {
+        return EasyPZ.momentumInteraction(onStep, (timePassed) =>
+        {
+            return maxSpeed - Math.pow((timePassed - duration / 2), 2) / (Math.pow(duration, 2) / (4 * maxSpeed));
+        }, duration);
+    }
+    
+    public static frictionInteraction(maxSpeed : number, friction : number, onStep : (dist) => void)
+    {
+        return EasyPZ.momentumInteraction(onStep, (timePassed) =>
+        {
+            return Math.max(0, maxSpeed - friction * timePassed);
+        }, maxSpeed / friction);
+    }
+    
+    public static momentumInteraction(onStep : (dist) => void, speedFct: (timePassed: number) => number, duration: number)
     {
         let startTime = Date.now();
         let lastMoveTime = Date.now();
         
-        let speedFct = (time) =>
-        {
-            let timePassed = time - startTime;
-            return Math.max(0, startSpeed - friction * timePassed);
-        };
-        
         let continueInteraction = () =>
         {
-            let speed = speedFct(Date.now());
+            const timePassed = Date.now() - startTime;
+            let speed = speedFct(timePassed);
             
-            if(speed > 0)
+            if(timePassed < duration)
             {
                 let dist = (Date.now() - lastMoveTime) * speed;
                 onStep(dist);
@@ -1115,7 +1126,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 
                 let time = Date.now() - refPoint.time;
                 let speed = dist / time;
-                mode.data.momentum = EasyPZ.momentumInteraction(speed, mode.settings.friction, (dist) =>
+                mode.data.momentum = EasyPZ.frictionInteraction(speed, mode.settings.friction, (dist) =>
                 {
                     let relativeMove = {x: flickDirection.x * dist, y: flickDirection.y * dist };
                     easypz.onPanned.emit(relativeMove);
@@ -1249,12 +1260,13 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 EasyPZ.addMode((easypz: EasyPZ) =>
 {
     const mode = {
-        ids: ['WHEEL_ZOOM', 'WHEEL_ZOOM_MOMENTUM'],
+        ids: ['WHEEL_ZOOM', 'WHEEL_ZOOM_MOMENTUM', 'WHEEL_ZOOM_EASE'],
         settings: {
             zoomInScaleChange: 0.8,
             zoomOutScaleChange: 1.2,
             momentumSpeedPercentage: 0.01,
-            momentumFriction: 0.000004
+            momentumFriction: 0.000004,
+            easeDuration: 300
         },
         
         onWheel: (eventData: EasyPzCallbackData) =>
@@ -1264,21 +1276,34 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             const zoomingIn = change > 0;
             
             let scale = zoomingIn ? mode.settings.zoomInScaleChange : mode.settings.zoomOutScaleChange;
-            easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scale});
+            let relativeScale = 1 - scale;
+            let absScale = Math.abs(relativeScale) * mode.settings.momentumSpeedPercentage;
+            let scaleSign = sign(relativeScale);
             
-            if(eventData.modeName === 'WHEEL_ZOOM_MOMENTUM')
+            if(eventData.modeName === 'WHEEL_ZOOM_EASE')
             {
-                let relativeScale = 1 - scale;
-                let absScale = Math.abs(relativeScale) * mode.settings.momentumSpeedPercentage;
-                let scaleSign = sign(relativeScale);
-                
-                this.flickMomentum = EasyPZ.momentumInteraction(absScale, mode.settings.momentumFriction, (dist) =>
+                this.zoomMomentum = EasyPZ.easeInteraction(absScale, mode.settings.easeDuration, (dist) =>
                 {
                     let newScale = 1 - scaleSign * dist;
                     easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: newScale});
                 });
                 
-                this.flickMomentum.start();
+                this.zoomMomentum.start();
+            }
+            else
+            {
+                easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: scale});
+                
+                if(eventData.modeName === 'WHEEL_ZOOM_MOMENTUM')
+                {
+                    this.flickMomentum = EasyPZ.frictionInteraction(absScale, mode.settings.momentumFriction, (dist) =>
+                    {
+                        let newScale = 1 - scaleSign * dist;
+                        easypz.onZoomed.emit({x: easypz.mousePos.x, y: easypz.mousePos.y, scaleChange: newScale});
+                    });
+                    
+                    this.flickMomentum.start();
+                }
             }
         }
     };
@@ -1360,7 +1385,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
                 let absScaleChangeSpeed = Math.abs(scaleChangeSpeed);
                 let scaleSign = sign(scaleChangeSpeed);
                 
-                mode.data.momentum = EasyPZ.momentumInteraction(absScaleChangeSpeed, mode.settings.friction, (dist) =>
+                mode.data.momentum = EasyPZ.frictionInteraction(absScaleChangeSpeed, mode.settings.friction, (dist) =>
                 {
                     let newScale = lastScale + scaleSign * dist;
                     easypz.onZoomed.emit({x: this.pinchZoomPos.x, y: this.pinchZoomPos.y, absoluteScaleChange: newScale, targetX: this.pinchZoomCenterPos.x, targetY: this.pinchZoomCenterPos.y});
