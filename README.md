@@ -19,7 +19,7 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
-#### 1.09
+#### 1.1.0
 
 * Made the default functionality to be applyTransformTo: "*" for when
 the easypz attribute is set.

@@ -58,7 +58,7 @@ class EasyPZLoader
             }
             else
             {
-                settingsObj = {applyTransformTo: "*"};
+                settingsObj = {applyTransformTo: "svg > *"};
             }
         }
         catch(e)
