@@ -1,6 +1,6 @@
 # EasyPZ
-Use this Javascript library to make your web visualization interactive 
-via pan and zoom, for mobile and desktop!
+**Use this Javascript library to make your web visualization interactive 
+via pan and zoom, for mobile and desktop!**
 
 
 EasyPZ supports many interactions for panning and zooming, including wheel, 
@@ -16,3 +16,14 @@ can be found at [demos.easypz.io](https://demos.easypz.io/).
 Instructions on how to use EasyPZ, explanations for the many options, as 
 well as how to extend EasyPZ with your own pan or zoom method,
 can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)! 
+
+### Changelog
+
+#### 1.09
+
+* Made the default functionality to be applyTransformTo: "*" for when
+the easypz attribute is set.
+
+### Known Issues
+* The behavior for hybrid (touchpad + mouse) devices needs to be fixed.
+ Currently, it only operates either as touch- or as mouse-based device.

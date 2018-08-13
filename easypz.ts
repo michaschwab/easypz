@@ -56,6 +56,10 @@ class EasyPZLoader
             {
                 settingsObj = JSON.parse(settingsString);
             }
+            else
+            {
+                settingsObj = {applyTransformTo: "*"};
+            }
         }
         catch(e)
         {
@@ -98,7 +102,7 @@ class EasyPZLoader
                 continue;
             }
             this.easyPzElements.push(el);
-            console.log('adding EasyPZ');
+            console.log('Adding EasyPZ');
             
             let modes: string[] = [];
             let onPanned = function() {};
@@ -107,7 +111,6 @@ class EasyPZLoader
             let onResetAbsoluteScale = function() {};
             let options = {};
             let applyTransformTo = '';
-            let replaceVariables = false;
             let modeSettings = {};
             
             try {
@@ -119,7 +122,6 @@ class EasyPZLoader
                 onTransformed = settingsObj.onTransformed;
                 onResetAbsoluteScale = settingsObj.onResetAbsoluteScale;
                 applyTransformTo = settingsObj.applyTransformTo;
-                replaceVariables = settingsObj.replaceVariables;
                 options = settingsObj.options;
                 modeSettings = settingsObj.modeSettings;
             }
@@ -127,7 +129,7 @@ class EasyPZLoader
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo, replaceVariables);
+            new EasyPZ(el, onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
         }
     }
 }
@@ -256,8 +258,7 @@ class EasyPZ
                 onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 onResetAbsoluteScale: () => void = () => {},
-                private applyTransformTo: string = '',
-                replaceVariables = false)
+                private applyTransformTo: string = '')
     {
         if(enabledModes && enabledModes.length)
         {
@@ -291,13 +292,6 @@ class EasyPZ
         this.resetAbsoluteScale.subscribe(() => this.saveCurrentTransformation(onResetAbsoluteScale));
         this.onPanned.subscribe(() => this.applyTransformation());
         this.onZoomed.subscribe(() => this.applyTransformation());
-        
-        if(replaceVariables)
-        {
-            this.detectTemplateVariables();
-        }
-        this.onPanned.subscribe(() => this.replaceVariables());
-        this.onZoomed.subscribe(() => this.replaceVariables());
         
         this.ngAfterViewInit();
         this.setupHostListeners();
@@ -467,62 +461,6 @@ class EasyPZ
             this.lastAppliedTransform.translateY = this.totalTransform.translateY;
             this.lastAppliedTransform.scale = this.totalTransform.scale;
         }
-    }
-    
-    //private templateVariableElements: Element[] = [];
-    //private static TEMPLATE_VARIABLES = { 'translateX': '__EASYPZ-TRANSLATE-X__', 'translateY': '__EASYPZ-TRANSLATE-Y__', 'scale': '__EASYPZ-SCALE__'};
-    
-    private detectTemplateVariables()
-    {
-        /*const templateVariableNames = Object.keys(EasyPZ.TEMPLATE_VARIABLES).map(key => EasyPZ.TEMPLATE_VARIABLES[key]);
-        const allEls = this.el.getElementsByTagName('*');
-        
-        for(let i = 0; i < allEls.length; i++)
-        {
-            const el = allEls[i];
-            
-            for(let i = 0; i < el.attributes.length; i++)
-            {
-                const attribute = el.attributes[i];
-                //console.log(el, attribute.name, attribute.value);
-                for(const variable of templateVariableNames)
-                {
-                    //console.log(el, attribute.value, variable);
-                    if(attribute.value && attribute.value.indexOf(variable) !== -1 && this.templateVariableElements.indexOf(el) === -1)
-                    {
-                        el.setAttribute('data-easypz-' + attribute.name, attribute.value);
-                        this.templateVariableElements.push(el);
-                    }
-                }
-            }
-        }*/
-    }
-    
-    private replaceVariables()
-    {
-        /*const TEMPLATE_VARIABLES = Object.keys(EasyPZ.TEMPLATE_VARIABLES);
-        
-        this.templateVariableElements.forEach(el =>
-        {
-            for(let i = 0; i < el.attributes.length; i++)
-            {
-                const attribute = el.attributes[i];
-                if(attribute.name.substr(0, 'data-easypz-'.length) === 'data-easypz-')
-                {
-                    const attrName = attribute.name.substr('data-easypz-'.length);
-                    let attrValue = attribute.value;
-                    
-                    for(const dataName of TEMPLATE_VARIABLES)
-                    {
-                        const templateVariable = EasyPZ.TEMPLATE_VARIABLES[dataName];
-                        const templateValue = this.totalTransform[dataName];
-                        attrValue = attrValue.replace(templateVariable, templateValue);
-                    }
-                    
-                    el.setAttribute(attrName, attrValue);
-                }
-            }
-        });*/
     }
     
     private static parseTransform(transform: string) : { translateX: number, translateY: number, scale: number, translateBeforeScale: boolean}
