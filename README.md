@@ -21,8 +21,8 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 #### 1.1.0
 
-* Made the default functionality to be applyTransformTo: "*" for when
-the easypz attribute is set.
+* Made the default functionality to be applyTransformTo: "svg > *" for when
+the easypz attribute is not set.
 
 ### Known Issues
 * The behavior for hybrid (touchpad + mouse) devices needs to be fixed.
