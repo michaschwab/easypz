@@ -19,6 +19,10 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.2
+
+* Allowed disabling EasyPZ by setting the enabled modes to an empty list.
+
 #### 1.1.1
 
 * Added a .setSettings method to EasyPZ to allow changing settings.

@@ -311,7 +311,7 @@ class EasyPZ
                        onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                        onResetAbsoluteScale: () => void = () => {},
                        applyTransformTo: string = '') {
-        if(enabledModes && enabledModes.length)
+        if(enabledModes)
         {
             this.enabledModes = enabledModes;
         }
