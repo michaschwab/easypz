@@ -19,6 +19,13 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.1
+
+* Added a .setSettings method to EasyPZ to allow changing settings.
+* Changes in the settings set via HTML are now detected and applied
+  to EasyPZ using the .setSettings method.
+* Increased the frequency of the settings observation from 2s to 0.5s.
+
 #### 1.1.0
 
 * Made the default functionality to be applyTransformTo: "svg > *" for when
