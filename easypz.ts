@@ -10,7 +10,11 @@ function sign(number: number)
 class EasyPZLoader
 {
     static DEFAULT_MODES = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM_EASE", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
-    private easyPzElements: HTMLElement[] = [];
+    private easyPzElements: {
+        element: HTMLElement,
+        settings: string,
+        easypz: EasyPZ
+    }[] = [];
     
     private static getSettingsFromString(settingsString) :
     {
@@ -91,18 +95,28 @@ class EasyPZLoader
     public checkElements()
     {
         let els = <NodeListOf<HTMLElement>> document.querySelectorAll('[easypz]');
+        const prevEls = this.easyPzElements.map(obj => obj.element);
         
         for(let i = 0; i < els.length; i++)
         {
             let el = els[i];
             let settingsString = el.getAttribute('easypz');
+            const prevIndex = prevEls.indexOf(el);
+            const prevObj = prevEls.indexOf(el) === -1 ? null : this.easyPzElements[prevIndex];
             
-            if(this.easyPzElements.indexOf(el) !== -1)
+            if(prevObj)
             {
-                continue;
+                if(prevObj.settings === settingsString) {
+                    // Same element, same settings: Do nothing.
+                    continue;
+                } else {
+                    // Same element, different settings: Update settings.
+                    console.log('Modifying EasyPZ');
+                }
             }
-            this.easyPzElements.push(el);
-            console.log('Adding EasyPZ');
+            else {
+                console.log('Adding EasyPZ');
+            }
             
             let modes: string[] = [];
             let onPanned = function() {};
@@ -129,7 +143,20 @@ class EasyPZLoader
             {
                 console.error(e);
             }
-            new EasyPZ(el, onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
+            
+            if(!prevObj) {
+                const easypz = new EasyPZ(el, onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
+                
+                this.easyPzElements.push({
+                    element: el,
+                    settings: settingsString,
+                    easypz: easypz
+                });
+            }
+            else {
+                prevObj.settings = settingsString;
+                prevObj.easypz.setSettings(onTransformed, options, modes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
+            }
         }
     }
 }
@@ -260,15 +287,39 @@ class EasyPZ
                 onResetAbsoluteScale: () => void = () => {},
                 private applyTransformTo: string = '')
     {
-        if(enabledModes && enabledModes.length)
-        {
-            this.enabledModes = enabledModes;
-        }
         this.el = el instanceof Node ? <HTMLElement> el : el.node();
         this.modes = EasyPZ.modes.map(unresolvedMode =>
         {
             return unresolvedMode(this);
         });
+        
+        this.setSettings(onTransform, options, enabledModes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
+        
+        this.ngAfterViewInit();
+        this.setupHostListeners();
+    }
+    
+    public setSettings(onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                       options?: {
+                           minScale?: number,
+                           maxScale?: number,
+                           bounds?: { top: number, right: number, bottom: number, left: number }
+                       },
+                       enabledModes?: string[],
+                       modeSettings: {[modeName: string]: {[settingName: string]: any}} = {},
+                       onPanned: (panData: EasyPzPanData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                       onZoomed: (zoomData: EasyPzZoomData, transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
+                       onResetAbsoluteScale: () => void = () => {},
+                       applyTransformTo: string = '') {
+        if(enabledModes && enabledModes.length)
+        {
+            this.enabledModes = enabledModes;
+        }
+        // Reset listeners.
+        this.onPanned = new EzEventEmitter<EasyPzPanData>();
+        this.onZoomed = new EzEventEmitter<EasyPzZoomData>();
+        this.resetAbsoluteScale = new EzEventEmitter<void>();
+        
         this.applyModeSettings(modeSettings);
         
         if(options)
@@ -286,15 +337,11 @@ class EasyPZ
                 this.options.bounds = options.bounds;
             }
         }
-        
         let transformBeforeScale = !applyTransformTo;
         this.trackTotalTransformation(onTransform, onPanned, onZoomed, transformBeforeScale);
         this.resetAbsoluteScale.subscribe(() => this.saveCurrentTransformation(onResetAbsoluteScale));
         this.onPanned.subscribe(() => this.applyTransformation());
         this.onZoomed.subscribe(() => this.applyTransformation());
-        
-        this.ngAfterViewInit();
-        this.setupHostListeners();
     }
     
     private saveCurrentTransformation(onResetAbsoluteScale)
@@ -1698,4 +1745,4 @@ EasyPZ.addMode((easypz: EasyPZ) =>
 const easyPZLoader = new EasyPZLoader();
 easyPZLoader.checkElements();
 window.addEventListener('load', function() { easyPZLoader.checkElements(); });
-window.setInterval(function() { easyPZLoader.checkElements(); }, 2000);
+window.setInterval(function() { easyPZLoader.checkElements(); }, 500);
