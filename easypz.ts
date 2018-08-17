@@ -288,10 +288,6 @@ class EasyPZ
                 private applyTransformTo: string = '')
     {
         this.el = el instanceof Node ? <HTMLElement> el : el.node();
-        this.modes = EasyPZ.modes.map(unresolvedMode =>
-        {
-            return unresolvedMode(this);
-        });
         
         this.setSettings(onTransform, options, enabledModes, modeSettings, onPanned, onZoomed, onResetAbsoluteScale, applyTransformTo);
         
@@ -315,6 +311,12 @@ class EasyPZ
         {
             this.enabledModes = enabledModes;
         }
+        // Update modes in case they are different.
+        this.modes = EasyPZ.modes.map(unresolvedMode =>
+        {
+            return unresolvedMode(this);
+        });
+        
         // Reset listeners.
         this.onPanned = new EzEventEmitter<EasyPzPanData>();
         this.onZoomed = new EzEventEmitter<EasyPzZoomData>();
