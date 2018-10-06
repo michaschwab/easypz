@@ -45,5 +45,4 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 the easypz attribute is not set.
 
 ### Known Issues
-* The behavior for hybrid (touchpad + mouse) devices needs to be fixed.
- Currently, it only operates either as touch- or as mouse-based device.
+Currently none.
