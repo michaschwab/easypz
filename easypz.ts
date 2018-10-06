@@ -254,12 +254,16 @@ class EasyPZ
     public height = 0;
     public width = 0;
     
-    private hasUsedTouch = false;
+    // Mobile devices call both touchend as well as mouseup on release.
+    // However, there is a delay - touchend is called about 250 ms before mouseup.
+    // These variables are used to prevent those mouseup events to be called if a
+    // touchend event was just called. The same is true for mousedown and touchstart.
+    private lastTouchEvent = 0;
+    private static TOUCH_TO_COMPUTER_SWITCH_TIME_MS = 500;
     
     static DIMENSIONS = ['x', 'y'];
     
     private enabledModes = ["SIMPLE_PAN", "HOLD_ZOOM_IN", "CLICK_HOLD_ZOOM_OUT", "WHEEL_ZOOM", "PINCH_ZOOM", "DBLCLICK_ZOOM_IN", "DBLRIGHTCLICK_ZOOM_OUT"];
-    //@Input() onPanned: (x: number, y: number) => void;
     public onPanned = new EzEventEmitter<EasyPzPanData>();
     public onZoomed = new EzEventEmitter<EasyPzZoomData>();
     public resetAbsoluteScale = new EzEventEmitter<void>();
@@ -630,13 +634,13 @@ class EasyPZ
         this.el.addEventListener('mouseup', (event) => this.onMouseUp(event));
         this.el.addEventListener('mouseout', (event) => this.onMouseOut(event));
         this.el.addEventListener('touchend', (event) => this.onTouchEnd(event));
-        this.el.addEventListener('contextmenu', (event) => this.onContextMenu(event));
+        this.el.addEventListener('contextmenu', (event) => this.onContextMenu());
         this.el.addEventListener('wheel', (event) => this.onWheel(event));
     }
     
     private onMouseDown(event: MouseEvent)
     {
-        if(!this.hasUsedTouch)
+        if(Date.now() - this.lastTouchEvent > EasyPZ.TOUCH_TO_COMPUTER_SWITCH_TIME_MS)
         {
             this.onMouseTouchDown(event);
         }
@@ -644,7 +648,7 @@ class EasyPZ
     
     private onTouchStart(event: TouchEvent)
     {
-        this.hasUsedTouch = true;
+        this.lastTouchEvent = Date.now();
         
         let eventType = EasyPZ.MOUSE_EVENT_TYPES.MOUSE_DOWN;
         if(event.touches.length == 1)
@@ -805,9 +809,7 @@ class EasyPZ
     
     private onMouseUp(event: MouseEvent)
     {
-        // This has to be checked because mobile devices call both touchend as well as mouseup on release.
-        
-        if(!this.hasUsedTouch)
+        if(Date.now() - this.lastTouchEvent > EasyPZ.TOUCH_TO_COMPUTER_SWITCH_TIME_MS)
         {
             this.onMouseTouchUp(event);
         }
@@ -829,13 +831,13 @@ class EasyPZ
     private onTouchEnd(event: TouchEvent)
     {
         // Touch End always has zero touch positions, so the pointer position can not be used here.
-        
+        this.lastTouchEvent = Date.now();
         let eventType = EasyPZ.MOUSE_EVENT_TYPES.MOUSE_UP;
         this.onMouseTouchUp(null, event);
         this.onMultiTouchEvent(eventType, event);
     }
     
-    private onContextMenu(event: MouseEvent)
+    private onContextMenu()
     {
         /*if(this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_IN) || this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT))
         {

@@ -19,6 +19,10 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.5
+
+* Allowed switching between mouse- and touch-based interactions on hybrid devices.
+
 #### 1.1.3
 
 * EasyPZ instances now check if new modes of pan and zoom are available when
