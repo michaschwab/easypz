@@ -19,7 +19,7 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
-#### 1.1.6
+#### 1.1.7
 
 * Basic support for rotate, skewX and skewY, and two different scales for X and Y. 
 * Add a new zoom method: shift drag zoom.

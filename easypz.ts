@@ -558,14 +558,14 @@ class EasyPZ
             if(scale)
             {
                 transformObject.scaleX = parseFloat(scale[1]);
-                transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[3]);
+                transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[1]);
             }
             else
             {
                 console.error('no scale found', transform);
             }
             
-            const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)scale\(([-0-9.]([, ][-0-9.]+)?)\)/.exec(transform);
+            const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)[ ]*scale\(([-0-9.]+([, ][-0-9.]+)?)\)/.exec(transform);
             if(translateScale)
             {
                 transformObject.translateBeforeScale = true;
