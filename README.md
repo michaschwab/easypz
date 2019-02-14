@@ -19,6 +19,11 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.6
+
+* Basic support for rotate, skewX and skewY, and two different scales for X and Y. 
+* Add a new zoom method: shift drag zoom.
+
 #### 1.1.5
 
 * Allowed switching between mouse- and touch-based interactions on hybrid devices.
