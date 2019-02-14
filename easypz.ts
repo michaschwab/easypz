@@ -484,30 +484,48 @@ class EasyPZ
                 
                 let translateX = this.totalTransform.translateX;
                 let translateY = this.totalTransform.translateY;
-                let scale = this.totalTransform.scale;
+                let scaleX = this.totalTransform.scale;
+                let scaleY = this.totalTransform.scale;
                 
                 if(transformData)
                 {
-                    const originalScale = transformData.scale / this.lastAppliedTransform.scale;
+                    const originalScaleX = transformData.scaleX / this.lastAppliedTransform.scale;
+                    const originalScaleY = transformData.scaleY / this.lastAppliedTransform.scale;
                     const originalTranslate = { x: 0, y: 0 };
-                    const translateBeforeScaleFactor = transformData.translateBeforeScale ? 1 : originalScale;
+                    const translateBeforeScaleFactorX = transformData.translateBeforeScale ? 1 : originalScaleX;
+                    const translateBeforeScaleFactorY = transformData.translateBeforeScale ? 1 : originalScaleY;
                     
-                    originalTranslate.x = (transformData.translateX - this.lastAppliedTransform.translateX / originalScale) * translateBeforeScaleFactor;
-                    originalTranslate.y = (transformData.translateY - this.lastAppliedTransform.translateY / originalScale) * translateBeforeScaleFactor;
+                    originalTranslate.x = (transformData.translateX - this.lastAppliedTransform.translateX / originalScaleX) * translateBeforeScaleFactorX;
+                    originalTranslate.y = (transformData.translateY - this.lastAppliedTransform.translateY / originalScaleY) * translateBeforeScaleFactorY;
                     // console.log(originalTranslate.x, transformData.translateX , this.lastAppliedTransform.translateX, originalScale, this.lastAppliedTransform.scale, this.lastAppliedTransform.lastScale, transformData.translateBeforeScale);
                     
-                    scale *= originalScale;
+                    scaleX *= originalScaleX;
+                    scaleY *= originalScaleY;
                     
-                    translateX = translateX / originalScale + originalTranslate.x / originalScale;
-                    translateY = translateY / originalScale + originalTranslate.y / originalScale;
+                    translateX = translateX / originalScaleX + originalTranslate.x / originalScaleX;
+                    translateY = translateY / originalScaleY + originalTranslate.y / originalScaleY;
                 }
                 else
                 {
                     console.log('what is wrong', transform);
                 }
                 
-                //element.setAttribute('transform', 'translate(' + translateX + ',' + translateY + ')' + 'scale(' + this.totalTransform.scale + ')');
-                element.setAttribute('transform', 'scale(' + scale + ')' + 'translate(' + translateX + ',' + translateY + ')');
+                let transformString = '';
+    
+                if(transformData.rotate) {
+                    transformString += 'rotate(' + transformData.rotate + ')';
+                }
+                if(transformData.skewX) {
+                    transformString += 'skewX(' + transformData.skewX + ')';
+                }
+                if(transformData.skewY) {
+                    transformString += 'skewY(' + transformData.skewY + ')';
+                }
+    
+                transformString += 'scale(' + scaleX + ',' + scaleY + ')';
+                transformString += 'translate(' + translateX + ',' + translateY + ')';
+                
+                element.setAttribute('transform', transformString);
             }
             
             this.lastAppliedTransform.translateX = this.totalTransform.translateX;
@@ -516,16 +534,16 @@ class EasyPZ
         }
     }
     
-    private static parseTransform(transform: string) : { translateX: number, translateY: number, scale: number, translateBeforeScale: boolean}
+    private static parseTransform(transform: string)
     {
-        const transformObject = { translateX: 0, translateY: 0, scale: 1, translateBeforeScale: false };
+        const transformObject = { translateX: 0, translateY: 0, scaleX: 1, scaleY: 1, translateBeforeScale: false,
+            rotate: '', skewX: '', skewY: ''};
         
         if(transform)
         {
-            transform = transform.replace(/ /g,'');
+            transform = transform.replace(/(\r\n|\n|\r)/gm,'');
             
-            //var translate  = /translate\((\d+),(\d+)\)/.exec(transform);
-            const translate  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)/.exec(transform);
+            const translate  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)/.exec(transform);
             if(translate)
             {
                 transformObject.translateX = parseFloat(translate[1]);
@@ -536,20 +554,38 @@ class EasyPZ
                 console.error('no translate found', transform);
             }
             
-            const scale  = /\s*scale\(([-0-9.]+)\)/.exec(transform);
+            const scale  = /\s*scale\(([-0-9.]+)([, ]([-0-9.]+))?\)/.exec(transform);
             if(scale)
             {
-                transformObject.scale = parseFloat(scale[1]);
+                transformObject.scaleX = parseFloat(scale[1]);
+                transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[3]);
             }
             else
             {
                 console.error('no scale found', transform);
             }
             
-            const translateScale  = /\s*translate\(([-0-9.]+),([-0-9.]+)\)scale\(([-0-9.]+)\)/.exec(transform);
+            const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)scale\(([-0-9.]([, ][-0-9.]+)?)\)/.exec(transform);
             if(translateScale)
             {
                 transformObject.translateBeforeScale = true;
+            }
+            
+            const rotate  = /\s*rotate\(([-0-9., ]*)\)/.exec(transform);
+            if(rotate)
+            {
+                transformObject.rotate = rotate[1];
+            }
+            
+            const skewX  = /\s*skewX\(([-0-9., ]*)\)/.exec(transform);
+            if(skewX)
+            {
+                transformObject.skewX = skewX[1];
+            }
+            const skewY  = /\s*skewY\(([-0-9., ]*)\)/.exec(transform);
+            if(skewY)
+            {
+                transformObject.skewY = skewY[1];
             }
         }
         
@@ -1772,6 +1808,47 @@ EasyPZ.addMode((easypz: EasyPZ) =>
             mode.data.zoomPosition = null;
             mode.data.zoomReference = null;
             mode.data.hasChangedDirection = false;
+        }
+    };
+    
+    return mode;
+});
+
+EasyPZ.addMode((easypz: EasyPZ) =>
+{
+    const mode = {
+        ids: ['SHIFT_DRAG_ZOOM'],
+        settings: { speed: 0.05 },
+        active: false,
+        data: {zoomPos: {x:0, y: 0}, currY: 0},
+        
+        onClickTouch: (e) =>
+        {
+            if(e.event.shiftKey)
+            {
+                mode.active = true;
+                mode.data.zoomPos.x = easypz.mousePos.x;
+                mode.data.zoomPos.y = easypz.mousePos.y;
+                mode.data.currY = easypz.mousePos.y;
+            }
+        },
+        
+        onMove: () =>
+        {
+            if(mode.active)
+            {
+                const deltaY = easypz.mousePos.y - mode.data.currY;
+                mode.data.currY = easypz.mousePos.y;
+                easypz.onZoomed.emit({
+                    x: mode.data.zoomPos.x,
+                    y: mode.data.zoomPos.y,
+                    scaleChange: 1 - mode.settings.speed * deltaY
+                });
+            }
+        },
+        
+        onClickTouchEnd: () => {
+            mode.active = false;
         }
     };
     
