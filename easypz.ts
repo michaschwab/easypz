@@ -56,7 +56,7 @@ class EasyPZLoader
         let settingsObj = {};
         try
         {
-            if(settingsString.length)
+            if(settingsString && settingsString.length)
             {
                 settingsObj = JSON.parse(settingsString);
             }
