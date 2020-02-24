@@ -19,6 +19,10 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.8
+
+* Allow passing easypz settings via the new data-easypz attribute to be more W3C compliant.
+
 #### 1.1.7
 
 * Basic support for rotate, skewX and skewY, and two different scales for X and Y. 

@@ -94,13 +94,14 @@ class EasyPZLoader
     
     public checkElements()
     {
-        let els = <NodeListOf<HTMLElement>> document.querySelectorAll('[easypz]');
+        let els = <HTMLElement[]> Array.from(document.querySelectorAll('[easypz]')).concat(
+            Array.from(document.querySelectorAll('[data-easypz]')));
         const prevEls = this.easyPzElements.map(obj => obj.element);
         
         for(let i = 0; i < els.length; i++)
         {
             let el = els[i];
-            let settingsString = el.getAttribute('easypz');
+            let settingsString = el.getAttribute('easypz') || el.dataset.easypz;
             const prevIndex = prevEls.indexOf(el);
             const prevObj = prevEls.indexOf(el) === -1 ? null : this.easyPzElements[prevIndex];
             
