@@ -686,7 +686,7 @@ class EasyPZ
         }
     }
     
-    private onMouseDown = (event: MouseEvent) =>
+    private onMouseDown(event: MouseEvent) =>
     {
         if(Date.now() - this.lastTouchEvent > EasyPZ.TOUCH_TO_COMPUTER_SWITCH_TIME_MS)
         {
@@ -694,7 +694,7 @@ class EasyPZ
         }
     }
     
-    private onTouchStart = (event: TouchEvent) =>
+    private onTouchStart(event: TouchEvent) =>
     {
         this.lastTouchEvent = Date.now();
         
@@ -711,7 +711,7 @@ class EasyPZ
         }
     }
     
-    private onMouseTouchMove = (mouseEvent: MouseEvent|null, touchEvent?: TouchEvent) : boolean =>
+    private onMouseTouchMove(mouseEvent: MouseEvent|null, touchEvent?: TouchEvent) : boolean =>
     {
         this.mouseMoveTime = Date.now();
         this.lastMousePos = {x: this.mousePos.x, y: this.mousePos.y};
@@ -734,12 +734,12 @@ class EasyPZ
         return eventWasUsed;
     }
     
-    private onMouseMove = (event: MouseEvent) =>
+    private onMouseMove(event: MouseEvent) =>
     {
         this.onMouseTouchMove(event);
     }
     
-    private onTouchMove = (event: TouchEvent) =>
+    private onTouchMove(event: TouchEvent) =>
     {
         if(event.touches.length == 1)
         {
@@ -855,14 +855,14 @@ class EasyPZ
         return eventWasUsed;
     }
     
-    private onMouseUp = (event: MouseEvent) =>
+    private onMouseUp(event: MouseEvent) =>
     {
         if(Date.now() - this.lastTouchEvent > EasyPZ.TOUCH_TO_COMPUTER_SWITCH_TIME_MS)
         {
             this.onMouseTouchUp(event);
         }
     }
-    private onMouseOut = (event: MouseEvent) =>
+    private onMouseOut(event: MouseEvent) =>
     {
         // The problem with this is that it detects mouseout events of elements within this element,
         // not only of mouseout events of the main element itself. This is why a pointer position check is done
@@ -876,7 +876,7 @@ class EasyPZ
         }
     }
     
-    private onTouchEnd = (event: TouchEvent) =>
+    private onTouchEnd(event: TouchEvent) =>
     {
         // Touch End always has zero touch positions, so the pointer position can not be used here.
         this.lastTouchEvent = Date.now();
@@ -885,7 +885,7 @@ class EasyPZ
         this.onMultiTouchEvent(eventType, event);
     }
     
-    private onContextMenu = () =>
+    private onContextMenu() =>
     {
         /*if(this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_IN) || this.modeOn(EasyPZ.MODES.DBLRIGHTCLICK_ZOOM_OUT))
         {
@@ -894,7 +894,7 @@ class EasyPZ
         }*/
     }
     
-    private onWheel = (event: WheelEvent) =>
+    private onWheel(event: WheelEvent) =>
     {
         let captured = false;
         
