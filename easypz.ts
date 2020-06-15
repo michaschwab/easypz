@@ -278,6 +278,17 @@ class EasyPZ
         bounds: { top: -150, right: 150, bottom: 150, left: -150 }
     };
     
+    private listeners = {
+        'mousedown': this.onMouseDown.bind(this),
+        'mousemove': this.onMouseMove.bind(this),
+        'touchmove': this.onTouchMove.bind(this),
+        'mouseup': this.onMouseUp.bind(this),
+        'mouseout': this.onMouseOut.bind(this),
+        'touchend': this.onTouchEnd.bind(this),
+        'contextmenu': this.onContextMenu.bind(this),
+        'wheel': this.onWheel.bind(this)
+    };
+    
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 options?: {
@@ -664,27 +675,15 @@ class EasyPZ
     
     private setupHostListeners()
     {
-        this.el.addEventListener('mousedown', this.onMouseDown);
-        this.el.addEventListener('touchstart', this.onTouchStart);
-        this.el.addEventListener('mousemove', this.onMouseMove);
-        this.el.addEventListener('touchmove', this.onTouchMove);
-        this.el.addEventListener('mouseup', this.onMouseUp);
-        this.el.addEventListener('mouseout', this.onMouseOut);
-        this.el.addEventListener('touchend', this.onTouchEnd);
-        this.el.addEventListener('contextmenu', this.onContextMenu);
-        this.el.addEventListener('wheel', this.onWheel);
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.addEventListener(listenerName, listenerFct);
+        }
     }
 
     removeHostListeners() {
-        this.el.removeEventListener('mousedown', this.onMouseDown);
-        this.el.removeEventListener('touchstart', this.onTouchStart);
-        this.el.removeEventListener('mousemove', this.onMouseMove);
-        this.el.removeEventListener('touchmove', this.onTouchMove);
-        this.el.removeEventListener('mouseup', this.onMouseUp);
-        this.el.removeEventListener('mouseout', this.onMouseOut);
-        this.el.removeEventListener('touchend', this.onTouchEnd);
-        this.el.removeEventListener('contextmenu', this.onContextMenu);
-        this.el.removeEventListener('wheel', this.onWheel);
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.removeEventListener(listenerName, listenerFct);
+        }
     }
     
     private onMouseDown = (event: MouseEvent) =>
