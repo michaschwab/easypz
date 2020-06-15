@@ -278,6 +278,17 @@ class EasyPZ
         bounds: { top: -150, right: 150, bottom: 150, left: -150 }
     };
     
+    private listeners = {
+        'mousedown': this.onMouseDown.bind(this),
+        'mousemove': this.onMouseMove.bind(this),
+        'touchmove': this.onTouchMove.bind(this),
+        'mouseup': this.onMouseUp.bind(this),
+        'mouseout': this.onMouseOut.bind(this),
+        'touchend': this.onTouchEnd.bind(this),
+        'contextmenu': this.onContextMenu.bind(this),
+        'wheel': this.onWheel.bind(this)
+    };
+    
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 options?: {
@@ -664,15 +675,15 @@ class EasyPZ
     
     private setupHostListeners()
     {
-        this.el.addEventListener('mousedown', (event) => this.onMouseDown(event));
-        this.el.addEventListener('touchstart', (event) => this.onTouchStart(event));
-        this.el.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        this.el.addEventListener('touchmove', (event) => this.onTouchMove(event));
-        this.el.addEventListener('mouseup', (event) => this.onMouseUp(event));
-        this.el.addEventListener('mouseout', (event) => this.onMouseOut(event));
-        this.el.addEventListener('touchend', (event) => this.onTouchEnd(event));
-        this.el.addEventListener('contextmenu', (event) => this.onContextMenu());
-        this.el.addEventListener('wheel', (event) => this.onWheel(event));
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.addEventListener(listenerName, listenerFct);
+        }
+    }
+
+    removeHostListeners() {
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.removeEventListener(listenerName, listenerFct);
+        }
     }
     
     private onMouseDown(event: MouseEvent)
