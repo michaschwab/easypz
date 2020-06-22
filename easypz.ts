@@ -554,30 +554,25 @@ class EasyPZ
         if(transform)
         {
             transform = transform.replace(/(\r\n|\n|\r)/gm,'');
+            let recognized = false;
             
-            const translate  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)/.exec(transform);
+            const translate  = /\s*translate\(([-0-9.]+),\s*([-0-9.]+)\)/.exec(transform);
             if(translate)
             {
                 transformObject.translateX = parseFloat(translate[1]);
                 transformObject.translateY = parseFloat(translate[2]);
-            }
-            else
-            {
-                console.error('no translate found', transform);
+                recognized = true;
             }
             
-            const scale  = /\s*scale\(([-0-9.]+)([, ]([-0-9.]+))?\)/.exec(transform);
+            const scale  = /\s*scale\(([-0-9.]+)(,\s*([-0-9.]+))?\)/.exec(transform);
             if(scale)
             {
                 transformObject.scaleX = parseFloat(scale[1]);
                 transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[1]);
-            }
-            else
-            {
-                console.error('no scale found', transform);
+                recognized = true;
             }
             
-            const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)[ ]*scale\(([-0-9.]+([, ][-0-9.]+)?)\)/.exec(transform);
+            const translateScale  = /\s*translate\(([-0-9.]+),\s*([-0-9.]+)\)[ ]*scale\(([-0-9.]+(,\s*[-0-9.]+)?)\)/.exec(transform);
             if(translateScale)
             {
                 transformObject.translateBeforeScale = true;
@@ -587,17 +582,24 @@ class EasyPZ
             if(rotate)
             {
                 transformObject.rotate = rotate[1];
+                recognized = true;
             }
             
             const skewX  = /\s*skewX\(([-0-9., ]*)\)/.exec(transform);
             if(skewX)
             {
                 transformObject.skewX = skewX[1];
+                recognized = true;
             }
             const skewY  = /\s*skewY\(([-0-9., ]*)\)/.exec(transform);
             if(skewY)
             {
                 transformObject.skewY = skewY[1];
+                recognized = true;
+            }
+
+            if(!recognized) {
+                console.error('No transformation recognized in: ', transform);
             }
         }
         
