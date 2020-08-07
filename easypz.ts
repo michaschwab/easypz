@@ -240,7 +240,7 @@ class EasyPzMode
     onRightClick?: (eventData: EasyPzCallbackData) => void;
 }
 
-export class EasyPZ
+class EasyPZ
 {
     private static MOUSE_EVENT_TYPES = {'MOUSE_DOWN': 0, 'MOUSE_MOVE': 1, 'MOUSE_UP': 2};
     
