@@ -280,6 +280,7 @@ class EasyPZ
     
     private listeners = {
         'mousedown': this.onMouseDown.bind(this),
+        'touchstart': this.onTouchStart.bind(this),
         'mousemove': this.onMouseMove.bind(this),
         'touchmove': this.onTouchMove.bind(this),
         'mouseup': this.onMouseUp.bind(this),
