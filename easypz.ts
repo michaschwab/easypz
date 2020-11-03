@@ -550,20 +550,12 @@ class EasyPZ
                 transformObject.translateX = parseFloat(translate[1]);
                 transformObject.translateY = parseFloat(translate[2]);
             }
-            else
-            {
-                console.error('no translate found', transform);
-            }
             
             const scale  = /\s*scale\(([-0-9.]+)([, ]([-0-9.]+))?\)/.exec(transform);
             if(scale)
             {
                 transformObject.scaleX = parseFloat(scale[1]);
                 transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[1]);
-            }
-            else
-            {
-                console.error('no scale found', transform);
             }
             
             const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)[ ]*scale\(([-0-9.]+([, ][-0-9.]+)?)\)/.exec(transform);
@@ -1092,7 +1084,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         active: false,
         data: {lastPosition: {x: 0, y: 0}},
         
-        onClickTouch: () =>
+        onClickTouch: (eventData: EasyPzCallbackData) =>
         {
             mode.active = false;
             mode.data.lastPosition = {x: easypz.mousePos.x, y: easypz.mousePos.y};
