@@ -19,6 +19,12 @@ can be found in the [Wiki](https://github.com/michaschwab/easypz/wiki)!
 
 ### Changelog
 
+#### 1.1.10
+* Improve detection of preexisting transformations and reduce error logs.
+
+#### 1.1.9
+* Add the removeHostListeners method to allow removing EasyPZ's event listeners.
+
 #### 1.1.8
 
 * Allow passing easypz settings via the new data-easypz attribute to be more W3C compliant.

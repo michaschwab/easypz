@@ -278,6 +278,17 @@ class EasyPZ
         bounds: { top: -150, right: 150, bottom: 150, left: -150 }
     };
     
+    private listeners = {
+        'mousedown': this.onMouseDown.bind(this),
+        'mousemove': this.onMouseMove.bind(this),
+        'touchmove': this.onTouchMove.bind(this),
+        'mouseup': this.onMouseUp.bind(this),
+        'mouseout': this.onMouseOut.bind(this),
+        'touchend': this.onTouchEnd.bind(this),
+        'contextmenu': this.onContextMenu.bind(this),
+        'wheel': this.onWheel.bind(this)
+    };
+    
     constructor(el: Node|{node: () => HTMLElement},
                 onTransform: (transform: { scale: number, translateX: number, translateY: number}) => void = () => {},
                 options?: {
@@ -543,22 +554,25 @@ class EasyPZ
         if(transform)
         {
             transform = transform.replace(/(\r\n|\n|\r)/gm,'');
+            let recognized = false;
             
-            const translate  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)/.exec(transform);
+            const translate  = /\s*translate\(([-0-9.]+),\s*([-0-9.]+)\)/.exec(transform);
             if(translate)
             {
                 transformObject.translateX = parseFloat(translate[1]);
                 transformObject.translateY = parseFloat(translate[2]);
+                recognized = true;
             }
             
-            const scale  = /\s*scale\(([-0-9.]+)([, ]([-0-9.]+))?\)/.exec(transform);
+            const scale  = /\s*scale\(([-0-9.]+)(,\s*([-0-9.]+))?\)/.exec(transform);
             if(scale)
             {
                 transformObject.scaleX = parseFloat(scale[1]);
                 transformObject.scaleY = scale[3] ? parseFloat(scale[3]) : parseFloat(scale[1]);
+                recognized = true;
             }
             
-            const translateScale  = /\s*translate\(([-0-9.]+)[, ]([-0-9.]+)\)[ ]*scale\(([-0-9.]+([, ][-0-9.]+)?)\)/.exec(transform);
+            const translateScale  = /\s*translate\(([-0-9.]+),\s*([-0-9.]+)\)[ ]*scale\(([-0-9.]+(,\s*[-0-9.]+)?)\)/.exec(transform);
             if(translateScale)
             {
                 transformObject.translateBeforeScale = true;
@@ -568,17 +582,24 @@ class EasyPZ
             if(rotate)
             {
                 transformObject.rotate = rotate[1];
+                recognized = true;
             }
             
             const skewX  = /\s*skewX\(([-0-9., ]*)\)/.exec(transform);
             if(skewX)
             {
                 transformObject.skewX = skewX[1];
+                recognized = true;
             }
             const skewY  = /\s*skewY\(([-0-9., ]*)\)/.exec(transform);
             if(skewY)
             {
                 transformObject.skewY = skewY[1];
+                recognized = true;
+            }
+
+            if(!recognized) {
+                console.error('No transformation recognized in: ', transform);
             }
         }
         
@@ -656,15 +677,15 @@ class EasyPZ
     
     private setupHostListeners()
     {
-        this.el.addEventListener('mousedown', (event) => this.onMouseDown(event));
-        this.el.addEventListener('touchstart', (event) => this.onTouchStart(event));
-        this.el.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        this.el.addEventListener('touchmove', (event) => this.onTouchMove(event));
-        this.el.addEventListener('mouseup', (event) => this.onMouseUp(event));
-        this.el.addEventListener('mouseout', (event) => this.onMouseOut(event));
-        this.el.addEventListener('touchend', (event) => this.onTouchEnd(event));
-        this.el.addEventListener('contextmenu', (event) => this.onContextMenu());
-        this.el.addEventListener('wheel', (event) => this.onWheel(event));
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.addEventListener(listenerName, listenerFct);
+        }
+    }
+
+    removeHostListeners() {
+        for(const [listenerName, listenerFct] of Object.entries(this.listeners)) {
+            this.el.removeEventListener(listenerName, listenerFct);
+        }
     }
     
     private onMouseDown(event: MouseEvent)
@@ -1084,7 +1105,7 @@ EasyPZ.addMode((easypz: EasyPZ) =>
         active: false,
         data: {lastPosition: {x: 0, y: 0}},
         
-        onClickTouch: (eventData: EasyPzCallbackData) =>
+        onClickTouch: () =>
         {
             mode.active = false;
             mode.data.lastPosition = {x: easypz.mousePos.x, y: easypz.mousePos.y};
