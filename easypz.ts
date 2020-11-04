@@ -457,33 +457,33 @@ class EasyPZ
     {
         if(!this.options.bounds)
             return;
-        
-        let x = this.totalTransform.translateX,
-            y = this.totalTransform.translateY
 
-        const boundLeft = this.options.bounds.left * this.totalTransform.scale
-        const boundRight = this.options.bounds.right * this.totalTransform.scale
-        const boundTop = this.options.bounds.top * this.totalTransform.scale
-        const boundBottom = this.options.bounds.bottom * this.totalTransform.scale
+        let x = this.totalTransform.translateX;
+        let y = this.totalTransform.translateY;
 
-        const borderX = [boundLeft, this.width - boundRight]
-        const borderLeft = Math.min(...borderX)
-        const borderRight = Math.max(...borderX)
+        const boundLeft = this.options.bounds.left * this.totalTransform.scale;
+        const boundRight = this.options.bounds.right * this.totalTransform.scale;
+        const boundTop = this.options.bounds.top * this.totalTransform.scale;
+        const boundBottom = this.options.bounds.bottom * this.totalTransform.scale;
+
+        const borderX = [boundLeft, this.width - boundRight];
+        const borderLeft = Math.min(...borderX);
+        const borderRight = Math.max(...borderX);
         if(x < borderLeft)
-            x = borderLeft
+            x = borderLeft;
         else if(x > borderRight)
-            x = borderRight
+            x = borderRight;
 
-        const borderY = [boundTop, this.height - boundBottom]
-        const borderTop = Math.min(...borderY)
-        const borderBottom = Math.max(...borderY)
+        const borderY = [boundTop, this.height - boundBottom];
+        const borderTop = Math.min(...borderY);
+        const borderBottom = Math.max(...borderY);
         if(y < borderTop)
-            y = borderTop
+            y = borderTop;
         else if(y > borderBottom)
-            y = borderBottom
+            y = borderBottom;
 
-        this.totalTransform.translateX = x
-        this.totalTransform.translateY = y
+        this.totalTransform.translateX = x;
+        this.totalTransform.translateY = y;
     }
     
     private lastAppliedTransform = { translateX: 0, translateY: 0, scale: 1 };
