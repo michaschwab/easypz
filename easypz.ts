@@ -456,29 +456,35 @@ class EasyPZ
     
     private ensureTransformWithinBounds(transformBeforeScale)
     {
-        if(this.options.bounds)
-        {
-            let scale = transformBeforeScale ? this.totalTransform.scale - 1 : 1 - 1 / this.totalTransform.scale;
-            let scaleTopLeft = -1 * Math.max(scale, 0);
-            let scaleBotRight = -1 * Math.min(scale, 0);
-            
-            if(this.totalTransform.translateX < scaleTopLeft * this.width + this.options.bounds.left)
-            {
-                this.totalTransform.translateX = scaleTopLeft * this.width + this.options.bounds.left;
-            }
-            if(this.totalTransform.translateX > scaleBotRight * this.width + this.options.bounds.right)
-            {
-                this.totalTransform.translateX = scaleBotRight * this.width + this.options.bounds.right;
-            }
-            if(this.totalTransform.translateY < scaleTopLeft * this.height + this.options.bounds.top)
-            {
-                this.totalTransform.translateY = scaleTopLeft * this.height + this.options.bounds.top;
-            }
-            if(this.totalTransform.translateY > scaleBotRight * this.height + this.options.bounds.bottom)
-            {
-                this.totalTransform.translateY = scaleBotRight * this.height + this.options.bounds.bottom;
-            }
-        }
+        if(!this.options.bounds)
+            return;
+
+        let x = this.totalTransform.translateX;
+        let y = this.totalTransform.translateY;
+
+        const boundLeft = this.options.bounds.left * this.totalTransform.scale;
+        const boundRight = this.options.bounds.right * this.totalTransform.scale;
+        const boundTop = this.options.bounds.top * this.totalTransform.scale;
+        const boundBottom = this.options.bounds.bottom * this.totalTransform.scale;
+
+        const borderX = [boundLeft, this.width - boundRight];
+        const borderLeft = Math.min(...borderX);
+        const borderRight = Math.max(...borderX);
+        if(x < borderLeft)
+            x = borderLeft;
+        else if(x > borderRight)
+            x = borderRight;
+
+        const borderY = [boundTop, this.height - boundBottom];
+        const borderTop = Math.min(...borderY);
+        const borderBottom = Math.max(...borderY);
+        if(y < borderTop)
+            y = borderTop;
+        else if(y > borderBottom)
+            y = borderBottom;
+
+        this.totalTransform.translateX = x;
+        this.totalTransform.translateY = y;
     }
     
     private lastAppliedTransform = { translateX: 0, translateY: 0, scale: 1 };
