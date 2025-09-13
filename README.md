@@ -7,11 +7,9 @@ EasyPZ supports many interactions for panning and zooming, including wheel,
 pinch, double click, hold, brush, rub, and dynamic zoom, panning methods
  including default, flick, and many variations.
 
-Many examples can be found at [easypz.io](https://easypz.io), including 
+Many examples can be found at [easypz.org](https://easypz.org), including 
 examples using [d3](https://d3js.org/), and examples that use
-canvas instead of SVG. Examples from the d3 gallery that just magically
-turn into navigatable visualizations without a single line of code
-can be found at [demos.easypz.io](https://demos.easypz.io/).
+canvas instead of SVG. 
 
 Instructions on how to use EasyPZ, explanations for the many options, as 
 well as how to extend EasyPZ with your own pan or zoom method,
